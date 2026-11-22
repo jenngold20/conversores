@@ -660,10 +660,10 @@
     return k ? mapa[k] : null;
   }
 
-  // Un acta ("As 17609", "AS/35380") puede venir en cualquier parte de una línea, en cualquier zona.
-  // "As 17609", "AS/17609", "Acta 17609" (no "AC": eso es otra cosa).
-  const RE_ACTA_EN_LINEA = /\b(?:a\s*\/?\s*s\s*\/?\s*|acta(?:\s+de\s+secuestro)?:?\s*)(\d{4,})\b/i;
-  const RE_PALABRA_ACTA = /^(?:a\s*\/?\s*s|acta(?:\s+de\s+secuestro)?:?)\s*\/?\s*$/i;
+  // Un acta ("As 17609", "AS/35380", "As: 00060658") puede venir en cualquier parte de una línea, en cualquier zona.
+  // "As 17609", "AS/17609", "As: 00060658", "Acta 17609" (no "AC": eso es otra cosa).
+  const RE_ACTA_EN_LINEA = /\b(?:a\s*\/?\s*s\s*[:\/]?\s*|acta(?:\s+de\s+secuestro)?:?\s*)(\d{4,})\b/i;
+  const RE_PALABRA_ACTA = /^(?:a\s*\/?\s*s|acta(?:\s+de\s+secuestro)?:?)\s*[:\/]?\s*$/i;
   // Si el acta va junto a otro texto, se separa como línea propia (el resto queda como línea aparte).
   // Si "As" o "Acta" está en una línea y el número en la siguiente, se unen.
   function separarActas(lineas) {
