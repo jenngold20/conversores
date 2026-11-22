@@ -584,9 +584,17 @@
     if (!t) return null;
     const tipo = tipoOf(t[1]);
     let resto = s.slice(t[0].length);
-    const z = ZONAS.find((x) => sinAcentos(resto).startsWith(sinAcentos(x.name)));
+    // Zonas del corrector y las de la lista compartida (las más largas primero, para no cortar "Parque Patricios" en "Parque").
+    const zonasCompartidas = Object.keys(((root.CALLES_COMPARTIDAS || {}).sinDireccion) || {}).map((n) => ({ name: n }));
+    const z = [...ZONAS, ...zonasCompartidas].sort((a, b) => b.name.length - a.name.length)
+      .find((x) => sinAcentos(resto).startsWith(sinAcentos(x.name)));
     // Sin zona en la misma línea: "Relevamiento Lisandro de la Torre 2233" → tipo + dirección (la zona queda vacía).
-    if (!z) return /\d/.test(resto) ? [tipo, clean(resto)] : null;
+    if (!z) {
+      const conSin = /^(.*?\d[^\s]*)\s+(sin\s+incidenc.*)$/i.exec(resto);
+      if (conSin) return [tipo, clean(conSin[1]), 'Sin incidencias'];
+      if (/\d/.test(resto) || /\s+y\s+/i.test(resto)) return [tipo, clean(resto)];
+      return null;
+    }
     resto = resto.slice(z.name.length).replace(/^\s*\.?\s*/, '');
     // Si la zona y la calle se llaman igual (Florida 143), la dirección lleva el nombre de la zona
     const conNombre = (d) => (/^\d/.test(d) ? z.name + ' ' + d : d);
