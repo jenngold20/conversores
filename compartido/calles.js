@@ -47,6 +47,8 @@
         fn: (m) => (Number(m[2]) > 1700 ? 'Ramos Mejía 1700' : m[0]), nota: 'Ramos Mejía mayor a 1700 → 1700' },
       // San Telmo: Plaza Dorrego se carga como Defensa 1080 (las direcciones vacías se resuelven en cada herramienta).
       { zona: 'San Telmo', re: /plaza dorrego/i, to: 'Defensa 1080', nota: 'Plaza Dorrego → Defensa 1080' },
+      // Figueroa Alcorta 2000 no existe en el callejero: se carga como 2001.
+      { zona: '*', re: /^(av\.?\s*)?(pres\.?\s*)?fig(ueroa|\.)?\s*\.?\s*alcorta\s+2000$/i, to: 'Av. Figueroa Alcorta 2001', nota: 'Figueroa Alcorta 2000 → 2001' },
       // Garibaldi 1000 (con o sin "al") se carga siempre como Brandsen 850.
       { zona: '*', re: /^garibaldi(\s+al)?\s+1000$/i, to: 'Brandsen 850', nota: 'Garibaldi 1000 → Brandsen 850' },
       // Roque Pérez llega hasta el 4000: alturas mayores se cargan como 4000.
