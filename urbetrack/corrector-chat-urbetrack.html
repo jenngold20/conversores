@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corrector de chats · Urbetrack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Superficies */
+    --bg: #f3f8f6;
+    --surface: #ffffff;
+    --surface-2: #f8fbfa;
+    --line: #e2ece8;
+    --line-2: #cfdfd9;
+    /* Texto */
+    --ink: #1f2d2a;
+    --ink-2: #3f524d;
+    --muted: #6b7f7a;
+    /* Acento: menta */
+    --accent: #b9e4d6;
+    --accent-soft: #e8f6f0;
+    --accent-strong: #2f7d6d;
+    --accent-ink: #1b5447;
+    /* Semánticos pastel */
+    --mint: #d6f2e4;   --mint-ink: #1d6845;   --mint-line: #b4e3cb;
+    --peach: #fde4d1;  --peach-ink: #924510;  --peach-line: #f8c9a6;
+    --rose: #fbdee5;   --rose-ink: #9c2e47;   --rose-line: #f4bccb;
+    --sky: #dbebfb;    --sky-ink: #235987;    --sky-line: #b7d5f3;
+    --lilac: #ebe4fc;  --lilac-ink: #4b3a94;  --lilac-line: #d4c8f5;
+    --stone: #edf1f0;  --stone-ink: #5f716c;
+    /* Forma */
+    --r-lg: 22px;
+    --r-md: 14px;
+    --r-sm: 10px;
+    --shadow: 0 1px 2px rgba(31, 45, 42, .04), 0 12px 32px -16px rgba(27, 84, 71, .2);
+    --ring: 0 0 0 4px rgba(47, 125, 109, .2);
+    /* Tipografía */
+    --f-ui: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --f-display: 'Fraunces', Georgia, serif;
+    --f-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; font: 14.5px/1.55 var(--f-ui); color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(900px 500px at 0% -10%, #d9f1e7 0%, transparent 60%),
+      radial-gradient(700px 420px at 100% 0%, #dde9fb 0%, transparent 55%),
+      radial-gradient(800px 500px at 40% 110%, #fde8dc 0%, transparent 55%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 1000px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ---------- Encabezado ---------- */
+  .top { margin-bottom: 28px; }
+  .brand { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+  .logo {
+    flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
+    background: linear-gradient(140deg, #c6ecdc, #d5e4fb); color: var(--accent-ink);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6), var(--shadow);
+  }
+  .eyebrow { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); }
+  h1 { margin: 0; font: 600 34px/1.1 var(--f-display); font-variation-settings: 'SOFT' 100; letter-spacing: -.01em; }
+  .sub { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 0; color: var(--ink-2); }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px;
+    border-radius: 99px; background: var(--mint); color: var(--mint-ink); font-size: 12px; font-weight: 600;
+  }
+
+  /* ---------- Tarjetas ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .card-head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 16px; }
+  .card-icon { flex: none; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; }
+  .card-icon.warn { background: var(--peach); color: var(--peach-ink); }
+  .card-icon.info { background: var(--sky); color: var(--sky-ink); }
+  .card-icon.ok { background: var(--accent-soft); color: var(--accent-strong); }
+  h2 { margin: 2px 0 2px; font: 600 19px/1.3 var(--f-display); font-variation-settings: 'SOFT' 100; display: flex; align-items: center; gap: 10px; }
+  .count { font: 600 12px/1 var(--f-ui); padding: 4px 9px; border-radius: 99px; background: var(--stone); color: var(--stone-ink); }
+  .count:empty { display: none; }
+  #dudas .count { background: var(--peach); color: var(--peach-ink); }
+  #cambios .count { background: var(--sky); color: var(--sky-ink); }
+  .card-head p { margin: 0; }
+
+  /* ---------- Zona de carga ---------- */
+  .drop {
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+    padding: 36px 24px; border: 1.5px dashed var(--line-2); border-radius: var(--r-md); background: var(--surface-2);
+    cursor: pointer; transition: border-color .15s, background .15s, transform .15s;
+  }
+  .drop:hover { border-color: var(--accent-strong); background: var(--accent-soft); }
+  .drop.over { border-color: var(--accent-strong); background: var(--accent-soft); transform: scale(1.005); box-shadow: var(--ring); }
+  .drop-icon {
+    width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; margin-bottom: 6px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--accent-strong); box-shadow: var(--shadow);
+  }
+  .drop-title { font-size: 15.5px; }
+  .drop-title b { font-weight: 700; }
+  .drop .muted { display: inline-flex; align-items: center; gap: 6px; }
+  #fname.picked { background: var(--mint); color: var(--mint-ink); font-weight: 600; }
+  #fname { padding: 4px 12px; border-radius: 99px; background: var(--stone); color: var(--stone-ink); font-size: 12.5px; font-weight: 500; margin-top: 4px; }
+
+  .toggle {
+    position: relative; display: flex; gap: 12px; align-items: flex-start; margin-top: 16px; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); cursor: pointer; transition: background .15s;
+  }
+  .toggle:hover { background: var(--accent-soft); }
+  .toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch { flex: none; position: relative; width: 38px; height: 22px; margin-top: 1px; border-radius: 99px; background: var(--line-2); transition: background .2s; }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(31, 45, 42, .2); transition: transform .2s cubic-bezier(.3, .7, .4, 1);
+  }
+  .toggle input:checked + .switch { background: var(--accent-strong); }
+  .toggle input:checked + .switch::after { transform: translateX(16px); }
+  .toggle input:focus-visible + .switch { box-shadow: var(--ring); }
+  .toggle b { display: block; font-weight: 600; font-size: 13.5px; }
+  .toggle small { display: block; color: var(--muted); font-size: 12.5px; }
+
+  /* ---------- Botones ---------- */
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 18px; }
+  .row .sep { flex: 1; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-ui); border: 0; border-radius: 12px;
+    padding: 12px 18px; min-height: 44px; cursor: pointer; background: var(--accent-strong); color: #fff;
+    box-shadow: 0 6px 16px -8px rgba(47, 125, 109, .8); transition: transform .12s, box-shadow .15s, background .15s, color .15s;
+  }
+  .btn:hover { background: #266a5c; }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+  .btn.sec { background: var(--surface); color: var(--ink-2); border: 1px solid var(--line-2); box-shadow: none; }
+  .btn.sec:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.xl { background: var(--lilac); color: var(--lilac-ink); border: 1px solid var(--lilac-line); box-shadow: none; }
+  .btn.xl:hover { background: #ddd2fa; }
+  .btn[disabled], .btn[disabled]:hover {
+    background: var(--stone); color: #a3b2ae; border-color: transparent; box-shadow: none; cursor: not-allowed; transform: none;
+  }
+
+  /* ---------- Resumen ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+  .stat { padding: 16px; border-radius: var(--r-md); border: 1px solid transparent; }
+  .stat b { display: block; font: 600 30px/1.1 var(--f-display); font-variation-settings: 'SOFT' 100; }
+  .stat span { font-size: 12.5px; font-weight: 600; opacity: .85; }
+  .stat:nth-child(1) { background: var(--sky); color: var(--sky-ink); border-color: var(--sky-line); }
+  .stat:nth-child(2) { background: var(--mint); color: var(--mint-ink); border-color: var(--mint-line); }
+  .stat:nth-child(3) { background: var(--rose); color: var(--rose-ink); border-color: var(--rose-line); }
+  .stat:nth-child(4) { background: var(--peach); color: var(--peach-ink); border-color: var(--peach-line); }
+
+  /* ---------- Tablas ---------- */
+  #tablaDudas, #tablaCambios { border: 1px solid var(--line); border-radius: var(--r-md); overflow: auto; max-height: 60vh; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  th {
+    position: sticky; top: 0; z-index: 1; text-align: left; white-space: nowrap; padding: 11px 12px;
+    background: #f6faf8; color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  tr:hover td { background: #fbfdfc; }
+  td:first-child { white-space: nowrap; font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+  .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; line-height: 1.4; }
+  .tag::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .t-ok { background: var(--mint); color: var(--mint-ink); }
+  .t-warn { background: var(--peach); color: var(--peach-ink); }
+  .t-bad { background: var(--rose); color: var(--rose-ink); }
+  .t-info { background: var(--sky); color: var(--sky-ink); }
+  td .muted { margin-top: 6px; padding: 6px 8px; border-radius: 6px; background: var(--surface-2); border-left: 2px solid var(--sky-line); font-size: 12px; }
+
+  /* ---------- Reglas ---------- */
+  details { margin: 0; }
+  summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px;
+    font: 600 17px/1.3 var(--f-display); font-variation-settings: 'SOFT' 100; border-radius: 10px;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary:focus-visible { outline: none; box-shadow: var(--ring); }
+  summary .chev { margin-left: auto; color: var(--muted); transition: transform .2s; }
+  details[open] summary .chev { transform: rotate(180deg); }
+  .rules { list-style: none; margin: 18px 0 0; padding: 0; display: grid; gap: 8px; }
+  .rules li { padding: 12px 14px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); font-size: 13.5px; }
+  .rules b { color: var(--ink); }
+  code { font-family: var(--f-mono); font-size: 12px; background: var(--accent-soft); color: var(--accent-ink); padding: 1px 6px; border-radius: 5px; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .empty { display: flex; align-items: center; gap: 10px; color: var(--mint-ink); background: var(--mint); padding: 14px 16px; border-radius: var(--r-md); font-weight: 500; }
+  .empty::before { content: "✓"; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #fff; font-size: 12px; font-weight: 700; }
+
+  @media (max-width: 560px) {
+    main { padding: 24px 16px 56px; }
+    h1 { font-size: 28px; }
+    .card { padding: 18px; border-radius: 18px; }
+    .row .btn { flex: 1 1 100%; justify-content: center; }
+    .row .sep { display: none; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" style="display:inline-flex;align-items:center;gap:6px;margin:20px 0 0 max(16px, calc(50% - 440px));padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #e2ece8;color:#1b5447;font:600 13px/1 system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none;">← Volver al inicio</a>
+<main>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="m8.5 10 2 2 4-4"/></svg>
+      </span>
+      <div>
+        <p class="eyebrow">Herramientas GCBA · Urbetrack</p>
+        <h1>Corrector de chats</h1>
+      </div>
+    </div>
+    <p class="sub">
+      Ordena y corrige las incidencias del chat de WhatsApp y arma el Excel para Urbetrack.
+      <span class="chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        El chat y las fotos no salen de tu navegador
+      </span>
+    </p>
+  </header>
+
+  <section class="card">
+    <label class="drop" id="drop">
+      <span class="drop-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M20 15v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/></svg>
+      </span>
+      <div class="drop-title"><b>Arrastrá el .txt del chat acá</b> o hacé clic para elegirlo</div>
+      <div id="fname">Todavía no hay archivo</div>
+      <input type="file" id="file" accept=".txt,text/plain" hidden>
+    </label>
+    <label class="toggle">
+      <input type="checkbox" id="usig" checked><span class="switch"></span>
+      <span><b>Verificar las calles con USIG</b><small>Confirma cada dirección con el geocodificador de la Ciudad. Necesita internet.</small></span>
+    </label>
+    <div class="row">
+      <button class="btn" id="procesar" disabled>Procesar chat</button>
+      <span class="sep"></span>
+      <button class="btn sec" id="descargar" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/></svg>
+        Chat corregido
+      </button>
+      <button class="btn sec" id="descargarReporte" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+        Reporte
+      </button>
+      <button class="btn xl" id="descargarXlsx" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>
+        Excel para Urbetrack
+      </button>
+    </div>
+  </section>
+
+  <section class="card" id="resultado" hidden>
+    <div class="card-head">
+      <span class="card-icon ok" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/></svg></span>
+      <div><h2>Resumen</h2></div>
+    </div>
+    <div class="stats" id="stats"></div>
+  </section>
+
+  <section class="card" id="dudas" hidden>
+    <div class="card-head">
+      <span class="card-icon warn" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg></span>
+      <div>
+        <h2>Para revisar a mano <span class="count" id="dudasN"></span></h2>
+        <p class="muted">Estas líneas no entran en ninguna regla. Quedaron tal cual están en el chat corregido.</p>
+      </div>
+    </div>
+    <div id="tablaDudas"></div>
+  </section>
+
+  <section class="card" id="cambios" hidden>
+    <div class="card-head">
+      <span class="card-icon info" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+      <div>
+        <h2>Cambios y borrados <span class="count" id="cambiosN"></span></h2>
+        <p class="muted">Todo lo que se modificó o se sacó del chat original.</p>
+      </div>
+    </div>
+    <div id="tablaCambios"></div>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary>
+        <span class="card-icon ok" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+        Reglas aplicadas
+        <svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </summary>
+      <ul class="rules">
+        <li><b>Tipo, zona, dirección, detalle y último renglón</b> en ese orden. En secuestros el último renglón es el infractor. Si no hay secuestro, la subclasificación es siempre "Sin incidencias".</li>
+        <li><b>Infractor</b> (valores de Urbetrack): ARTESANO, COMERCIO, COMIDA ARTESANAL, FOOD TRUCK, MANTERO, PARRILLA, PUESTO DE VENTA AMBULANTE. Vendedor ambulante o senegalés → PUESTO DE VENTA AMBULANTE; mantero → MANTERO. Si falta, PUESTO DE VENTA AMBULANTE.</li>
+        <li><b>Secuestros</b> sin acta o sin dirección se borran. Con varias actas se separan en un mensaje por acta, con la misma foto.</li>
+        <li><b>Actas</b> normalizadas a AS + número (por ejemplo <code>As/35380</code> → <code>AS35380</code>).</li>
+        <li><b>Avellaneda:</b> zona "Avellaneda" (sin "10A"). Sin dirección en una incidencia: "Avellaneda y Nazca".</li>
+        <li><b>Zonas:</b> Cerviño, Barrio Chino, Retiro, Constitución, Once, Mataderos, Corrientes Cultural, Parque 3 de Febrero, Plaza Francia.</li>
+        <li><b>Corrientes Cultural:</b> si no hay calle (vacía, "Plazoleta Norte", etc.) la dirección es siempre "Corrientes y Cerrito", también en secuestros. "Av. Corrientes Cultural 1400" pasa a "Corrientes 1400".</li>
+        <li><b>Texto y foto:</b> si el texto de una incidencia llega sin foto y la foto del mismo remitente llega hasta 5 minutos antes o después, se unen en una sola fila.</li>
+        <li><b>Grupos</b> (SAME, Policía, PFA, Gendarmería, Bomberos, etc.) que aparecen en el caption se conservan como detalle, en mayúsculas.</li>
+        <li><b>Texto libre</b> dentro de un caption con foto: se borra. Mensajes sin foto que no son incidencias: se borran.</li>
+        <li><b>Calles:</b> se normalizan (<code>Av nazca 485</code> → <code>Nazca 485</code>, <code>Emilio lamarca</code> → <code>Emilio Lamarca</code>, acentos y mayúsculas). Los tipeos cercanos se corrigen. Las calles que no están en la lista interna se buscan en USIG y se usa su nombre oficial (sirve para todo CABA). Con USIG se confirma cada dirección.</li>
+        <li><b>Excel para Urbetrack:</b> mismas 22 columnas que el Excel de la página (categoría, grupo, tipo de servicio, detalle, código de acta, dirección, etc.). La foto y su copia se unen en una sola fila.</li>
+        <li><b>Duplicados</b> (archivo adjunto y &lt;Multimedia omitido&gt;) y fotos: se mantienen siempre.</li>
+      </ul>
+    </details>
+  </section>
+</main>
+
+<script src="../compartido/calles.js"></script>
+<script>
+// Motor de corrección de chats de WhatsApp para Urbetrack.
+// Sin dependencias. Funciona en Node y en el navegador (window.UrbeTransform).
+(function (root) {
+  'use strict';
+
+  // ---------- Listas y reglas (editables) ----------
+  // Valores que acepta Urbetrack en Detalle de servicio (el resto da error).
+  const INFRACTORES = ['ARTESANO', 'COMERCIO', 'COMIDA ARTESANAL', 'FOOD TRUCK', 'MANTERO', 'PARRILLA', 'PUESTO DE VENTA AMBULANTE'];
+
+  const ZONAS = [
+    { name: 'Avellaneda', re: /^avellaneda/i },
+    { name: 'Florida', re: /florida/i },
+    { name: 'Cerviño', re: /cervi/i },
+    { name: 'Mataderos', re: /matadero/i },
+    { name: 'Barrio Chino', re: /barrio chino/i },
+    { name: 'Corrientes Cultural', re: /corrientes/i },
+    { name: 'Retiro', re: /retiro/i },
+    { name: 'Constitución', re: /constituci/i },
+    { name: 'Parque 3 de Febrero', re: /3 de febrero|tres de febrero/i },
+    { name: 'Plaza Francia', re: /plaza francia/i },
+    { name: 'Once', re: /^once/i },
+    { name: 'Liniers', re: /liniers/i }
+  ];
+
+  // Reglas de dirección por zona. Cada regla: re (sobre la dirección), to (reemplazo).
+  // Las de "sin dirección" van en FALLBACK_SIN_DIRECCION.
+  const REGLAS_DIRECCION = {
+    'Cerviño': [
+      { re: /av\.?\s*sarmiento\s*2600/i, to: 'Av. Sarmiento 2601' },
+      { re: /^(av\.?\s*)?s+armiento\b/i, fn: () => 'Av. Sarmiento' }
+    ],
+    'Barrio Chino': [
+      { re: /arribe[nñ]os\s*2100/i, to: 'Arribeños 2105' }
+    ],
+    'Constitución': [
+      { re: /metrob[uú]s\s+brasil/i, to: 'Brasil 1100' },
+      // En Constitución siempre "Hornos N", sin "Gral." ni "Av."
+      { re: /^(av\.?\s*|gral\.?\s*|general\s+)?hornos\s+(\d{1,5}[a-z]?)$/i, fn: (m) => 'Hornos ' + m[2] }
+    ],
+    'Once': [
+      { re: /plaza/i, to: 'Rivadavia y Pueyrredón' },
+      { re: /azucenas/i, to: 'Sarmiento y Pueyrredón' }
+    ],
+    // Sin calle (vacía, "Plazoleta Norte", etc.): siempre Corrientes y Cerrito. Las intersecciones ("y") no se tocan.
+    'Corrientes Cultural': [
+      // "Av. Corrientes Cultural 1400" (error de tipeo frecuente) → "Corrientes 1400"
+      { re: /^(av\.?\s*)?corrientes\s+cultural\s+(\d{1,5}[a-z]?)$/i, fn: (m) => 'Corrientes ' + m[2] },
+      { re: /^(?!.*\d)(?!.*\sy\s).*$/i, to: 'Corrientes y Cerrito' }
+    ],
+    'La Rural': [
+      { re: /^calzada circular$/i, to: 'Las Heras 4103' }
+    ],
+    'San Telmo': [
+      // Sin calle (vacía, "Plaza Dorrego", etc.) → Defensa 1080
+      { re: /^(?!.*\d)(?!.*\sy\s).*$/i, to: 'Defensa 1080' }
+    ],
+    'Cafecito': [
+      { re: /interior del parque/i, to: 'Av. Figueroa Alcorta 2302' }
+    ]
+  };
+
+  // Sin dirección (solo relevamientos, hojas de ruta, etc.). En secuestros se borra.
+  const FALLBACK_SIN_DIRECCION = {
+    'Mataderos': 'Bragado 6500',
+    'Corrientes Cultural': 'Corrientes y Cerrito',
+    'Parque 3 de Febrero': 'Infanta Isabel 400',
+    'Plaza Francia': 'Junín 1750',
+    'Avellaneda': 'Avellaneda y Nazca'
+  };
+
+  // ---------- Normalización de calles ----------
+  // Nombres oficiales (sin acento, en minúscula) → forma correcta. Ampliable.
+  const CALLES = ['Avellaneda', 'Nazca', 'Bacacay', 'Campana', 'Cuenca', 'Argerich', 'Aranguren', 'Bogotá',
+    'Bahía Blanca', 'Concordia', 'Culpina', 'Emilio Lamarca', 'Venancio Flores', 'Rivadavia', 'Florida',
+    'Morón', 'Felipe Vallese', 'Helguera', 'Chilecito', 'Joaquín V. González', 'San Nicolás', 'Fray Cayetano',
+    'Yerbal', 'Cerrito', 'Corrientes', 'Junín', 'Lima', 'Garay', 'Arribeños', 'Bragado', 'Infanta Isabel',
+    'Pueyrredón', 'Ramón Falcón', 'Ramos Mejía', 'Sarmiento', 'Cerviño', 'Callao', 'Lisandro de la Torre', 'Libertador', 'Flor de Otoño', 'Sara Beatriz', 'Colibrí', 'Aguaí', 'Brasil',
+    'Gral Paz', 'José León Suárez', 'Cuzco', 'Hornos', 'Pasteur', 'Castelli', 'Valentín Gómez', 'Ortiz', 'Alvear', 'Virrey Vertiz', '11 de Septiembre', 'Las Heras', 'Pedro Montt', 'Kennedy', 'Juan Domingo Perón', 'Carlos Pellegrini', '9 de Julio', 'Lavalle', 'Figueroa Alcorta', 'Alma Fuerte',
+    'Jorge Newbery', 'Guzmán', 'Dorrego', 'Roque Pérez', 'Ramón Freire', 'García del Río', 'Superí', 'Chivilcoy',
+    'Alberto Gerchunoff', 'Rogelio Yrurtia', 'Lincoln', 'Arenales', 'Nueva York', 'Brandsen',
+    'Medrano', 'Bartolomé Mitre', 'Varela', 'Crisóstomo Álvarez', "O'Higgins", 'Juramento', 'Castañares', 'Defensa'];
+  // Calles que el operador confirmó en el callejero de CABA aunque USIG no las tenga.
+  // Dentro del rango de alturas se aceptan sin consultar USIG. Fuera del rango, sigue la verificación normal.
+  const CALLES_VERIFICADAS = [
+    { nombre: 'Flor de Otoño', desde: 1, hasta: 1100 },
+    { nombre: 'Sara Beatriz', desde: 1, hasta: 1100 },
+    { nombre: 'Colibrí', desde: 1, hasta: 1100 },
+    { nombre: 'Aguaí', desde: 2001, hasta: 2050 },
+  ];
+  const esVerificada = (nombre, altura) => {
+    const n = parseInt(altura, 10);
+    return CALLES_VERIFICADAS.some((c) => sinAcentos(c.nombre) === sinAcentos(String(nombre)) && n >= c.desde && n <= c.hasta);
+  };
+  // Solo estas llevan "Av." delante. Las demás se escriben sin "Av".
+  // "Sarmiento" lleva "Av." solo en Cerviño/rural (en Once es la calle Sarmiento sin "Av").
+  const AVENIDAS = ['Castañares','Lincoln','Avellaneda', 'Rivadavia', 'Cerviño', 'Callao', 'Lisandro de la Torre', 'Libertador', 'Brasil', 'Alvear', '9 de Julio', 'Figueroa Alcorta'];
+  const esSarmientoAv = (zona) => /cervi|rural|palermo/i.test(zona || '');
+  const CONECTORES = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'el'];
+
+  function sinAcentos(s) {
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[.,]/g, '').replace(/\s+/g, ' ').trim();
+  }
+  const CALLE_CLAVE = new Map();
+  for (const c of CALLES) CALLE_CLAVE.set(sinAcentos(c), c);
+  CALLE_CLAVE.set('r mejia', 'Ramos Mejía'); // "R. Mejía" es Ramos Mejía
+  CALLE_CLAVE.set('11 de septiembre de 1888', '11 de Septiembre'); // nombre completo de la calle
+  CALLE_CLAVE.set('montt', 'Pedro Montt'); // "Montt" en una intersección
+  // Abreviaturas de calles de Parque Saavedra y Parque Mugica
+  CALLE_CLAVE.set('r freire', 'Ramón Freire');
+  CALLE_CLAVE.set('r yrurtia', 'Rogelio Yrurtia');
+  CALLE_CLAVE.set('a gerchunoff', 'Alberto Gerchunoff');
+  CALLE_CLAVE.set('parque mugica yrurtia', 'Rogelio Yrurtia'); // el chat lo escribe así, es Yrurtia
+  CALLE_CLAVE.set('r rogelio', 'Rogelio Yrurtia');
+  CALLE_CLAVE.set('ac corrientes', 'Av. Corrientes'); // tipeo de "av corrientes"
+  CALLE_CLAVE.set('c arenales', 'Arenales'); // intersección en Plaza Arenales
+  CALLE_CLAVE.set('varela', 'Av. Varela'); // es avenida (USIG: VARELA AV.)
+  CALLE_CLAVE.set('juramento', 'Av. Juramento'); // es avenida (USIG: JURAMENTO AV.)
+  // Abreviaturas de José León Suárez que escriben en el chat
+  ['j.l. suares', 'j.l suares', 'jl suares', 'j.l. suarez'].forEach((k) => CALLE_CLAVE.set(k, 'José León Suárez'));
+  // Agrega una calle oficial (por ejemplo la que devuelve USIG) para que el motor la reconozca después.
+  function registrarCalle(nombre) { if (nombre) CALLE_CLAVE.set(sinAcentos(nombre), nombre); }
+
+  function levenshtein(a, b) {
+    const m = a.length, n = b.length;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) {
+      const cur = [i];
+      for (let j = 1; j <= n; j++) {
+        cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      }
+      prev = cur;
+    }
+    return prev[n];
+  }
+
+  function titulo(s) {
+    return s.split(' ').map((p, i) => (i > 0 && CONECTORES.includes(p.toLowerCase()) ? p.toLowerCase()
+      : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())).join(' ');
+  }
+
+  // Devuelve { nombre, aviso } para un nombre de calle (sin altura).
+  function normalizarNombre(raw, zona) {
+    let s = clean(raw).replace(/\.$/, '');
+    let prefijo = false;
+    if (/^(av|avda|avenida)\b\.?\s*/i.test(s)) { prefijo = true; s = s.replace(/^(av|avda|avenida)\b\.?\s*/i, ''); }
+    const prefijoDe = (c) => (c === 'Sarmiento' ? (esSarmientoAv(zona) ? 'Av. ' : '') : (AVENIDAS.includes(c) && prefijo ? 'Av. ' : ''));
+    const clave = sinAcentos(s);
+    if (CALLE_CLAVE.has(clave)) {
+      const c = CALLE_CLAVE.get(clave);
+      return { nombre: prefijoDe(c) + c, aviso: null, cambio: true };
+    }
+    // Nombre incompleto: "Lamarca" → "Emilio Lamarca" (solo si es único)
+    const completos = [...CALLE_CLAVE.keys()].filter((k) => k.endsWith(' ' + clave));
+    if (completos.length === 1) {
+      const c = CALLE_CLAVE.get(completos[0]);
+      return { nombre: prefijoDe(c) + c, aviso: null, cambio: true };
+    }
+    // Tipeo: la forma más parecida, si es muy cercana
+    let mejor = null, dist = 99;
+    for (const k of CALLE_CLAVE.keys()) {
+      const d = levenshtein(clave, k);
+      if (d < dist) { dist = d; mejor = k; }
+    }
+    const umbral = clave.length <= 5 ? 1 : 2;
+    if (mejor && dist > 0 && dist <= umbral) {
+      const c = CALLE_CLAVE.get(mejor);
+      return { nombre: prefijoDe(c) + c, aviso: 'tipeo corregido: "' + s + '" → ' + c, cambio: true };
+    }
+    return { nombre: (prefijo ? 'Av. ' : '') + titulo(s), aviso: 'calle no reconocida: "' + s + '" (verificar)', cambio: true };
+  }
+
+  // Dirección completa: "Calle 123" o "Calle y Otra". Devuelve { direccion, avisos }.
+  function normalizarDireccion(dir, zona) {
+    const avisos = [];
+    let d = clean(dir).replace(/^colectora\s+/i, ''); // "Colectora Gral Paz 10952" → "Gral Paz 10952"
+    if (!d) return { direccion: d, avisos };
+    // "Bacacay y 3401": la "y" sobra, es una altura. Se saca.
+    const sobra = /^(.*?)\s+y\s+(\d{1,5}[a-z]?)$/i.exec(d);
+    if (sobra) d = sobra[1] + ' ' + sobra[2];
+    // "Florida al 143": el "al" no es parte de la calle
+    d = d.replace(/\s+al\s+(?=\d)/i, ' ');
+    const partes = d.split(/\s+y\s+/i);
+    if (partes.length === 2) {
+      const a = normalizarNombre(partes[0], zona), b = normalizarNombre(partes[1], zona);
+      [a, b].forEach((x) => x.aviso && avisos.push(x.aviso));
+      return { direccion: a.nombre + ' y ' + b.nombre, avisos };
+    }
+    const m = /^(.*?)\s+(\d{1,5}[a-z]?)$/i.exec(d);
+    if (!m) { // sin altura: solo nombre
+      const n = normalizarNombre(d, zona);
+      if (n.aviso) avisos.push(n.aviso);
+      return { direccion: n.nombre, avisos };
+    }
+    const n = normalizarNombre(m[1], zona);
+    if (n.aviso) avisos.push(n.aviso);
+    return { direccion: n.nombre + ' ' + m[2], avisos };
+  }
+
+  // ---------- Utilidades ----------
+  const HEAD_RE = /^(\d{1,2}\/\d{1,2}\/\d{4}, \d{1,2}:\d{2}(?::\d{2})?(?: ?[ap]\. ?m\.)?) - /i;
+
+  function clean(s) {
+    return String(s).replace(/[‎‏  ]/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  function zonaOf(raw) {
+    const z = ZONAS.find((x) => x.re.test(raw));
+    return z ? z.name : clean(raw).replace(/\s+\d+[a-z]?$/i, '');
+  }
+
+  function tipoOf(raw) {
+    const t = clean(raw);
+    if (/secuestr|decomis/i.test(t)) return 'Secuestro';
+    if (/re[lv]e[lv]amiento/i.test(t)) return 'Relevamiento'; // "Relevamiento" o el error "Revelamiento"
+    if (/disuasi[oó]n/i.test(t)) return 'Disuasión';
+    if (/^reclamo\b/i.test(t)) return 'Reclamo';
+    if (/^evento\b/i.test(t)) return 'Evento';
+    if (/hoja de ruta/i.test(t)) return 'Hoja de ruta';
+    if (/punto cr[oó]nico/i.test(t)) return 'Punto crónico';
+    if (/patrulla/i.test(t)) return 'Patrulla';
+    if (/derivad/i.test(t)) return 'Derivado';
+    return null;
+  }
+
+  function actaOf(t) {
+    const m = /^a\s*\/?\s*s\s*\/?\s*(\d{3,})\b/i.exec(clean(t));
+    return m ? 'AS' + m[1] : null;
+  }
+
+  function infractorOf(t) {
+    const s = clean(t);
+    if (/parrilla/i.test(s)) return 'PARRILLA';
+    if (/mantero/i.test(s)) return 'MANTERO';
+    if (/comida artesanal/i.test(s)) return 'COMIDA ARTESANAL';
+    if (/artesan/i.test(s)) return 'ARTESANO';
+    if (/food/i.test(s)) return 'FOOD TRUCK';
+    if (/comercio/i.test(s)) return 'COMERCIO';
+    if (/puesto de venta/i.test(s)) return 'PUESTO DE VENTA AMBULANTE';
+    if (/puesto sin permiso|puesto con permiso/i.test(s)) return 'PUESTO DE VENTA AMBULANTE';
+    return 'PUESTO DE VENTA AMBULANTE'; // vendedor senegalés, vendedor ambulante, etc.
+  }
+
+  function fixTypos(t) {
+    let s = clean(t);
+    s = s.replace(/secuestr[oó]/i, 'Secuestro').replace(/decomis[oó]/i, 'Decomiso');
+    if (/^sin\s+incidenc/i.test(s)) return 'Sin incidencias';
+    return s;
+  }
+
+  // Grupos o agencias que se mencionan en el caption (SAME, Policía, etc.). Se conservan como detalle.
+  const GRUPOS = /\b(same|polic[ií]a|pfa|gendarmer[ií]a|prefectura|bomberos|metropolitana|gcba|guardia urbana)\b/i;
+
+  // Clasifica una línea de caption (no tipo, ni zona, ni la primera dirección).
+  function clasificar(t) {
+    const s = clean(t);
+    if (!s) return 'vacio';
+    if (actaOf(s)) return 'acta';
+    if (/^sin\s+incidenc/i.test(s)) return 'sin';
+    if (/secuestr|decomis|ocupaci/i.test(s)) return 'detalle';
+    if (GRUPOS.test(s)) return 'grupo';
+    const comentario = /\bno\b|visualiz|observ|se van|desplaz|eleven|paso|gente/i.test(s) || s.split(' ').length > 4;
+    if (!comentario && /vendedor|senegal|mantero|artesan|comercio|food|parrilla|puesto|ambulante/i.test(s)) return 'infractor';
+    if (/^\d{1,2}\s+de\s+[a-záéíóúñü]+(\s+de\s+\d{4})?\s+\d{1,5}[a-z]?$/i.test(s)) return 'direccion'; // "11 de septiembre 1900"
+    if (/^(av\.?\s+)?\d{1,2}\s+de\s+[a-záéíóúñü]+\s+y\s+[a-záéíóúñü.\s]+$/i.test(s)) return 'direccion'; // "Av. 9 de Julio y Lavalle"
+    if (/^[a-záéíóúñü.\s]+?\s+\d{1,5}[a-z]?$/i.test(s)) return 'direccion';          // "Campana 200", "Av nazca 5"
+    if (/^[a-záéíóúñü.'’\s]+?\s+y\s+[a-záéíóúñü.'’\s]+$/i.test(s)) return 'direccion';   // "Av. Avellaneda y Nazca", "Juramento y O'Higgins"
+    return 'comentario';
+  }
+
+  // "Relevamiento Avellaneda Av nazca 277 sin incidencia" → [tipo, zona, dirección, resultado]
+  function partirLineaUnica(linea) {
+    const s = clean(linea);
+    const t = /^(re[lv]e[lv]amiento|secuestr[oó]|decomis[oó]|hoja de ruta|punto cr[oó]nico|patrulla|derivado)\b\s*\.?\s*/i.exec(s);
+    if (!t) return null;
+    const tipo = tipoOf(t[1]);
+    let resto = s.slice(t[0].length);
+    const z = ZONAS.find((x) => sinAcentos(resto).startsWith(sinAcentos(x.name)));
+    if (!z) return null;
+    resto = resto.slice(z.name.length).replace(/^\s*\.?\s*/, '');
+    // Si la zona y la calle se llaman igual (Florida 143), la dirección lleva el nombre de la zona
+    const conNombre = (d) => (/^\d/.test(d) ? z.name + ' ' + d : d);
+    const r = /^(.*?\d[^\s]*)\s+(sin\s+incidenc.*)$/i.exec(resto);
+    if (r) return [tipo, z.name, conNombre(clean(r[1])), 'Sin incidencias'];
+    if (/\d/.test(resto)) return [tipo, z.name, conNombre(clean(resto))];
+    return null;
+  }
+
+  // ---------- Parser ----------
+  function parse(text) {
+    const entries = [];
+    let cur = null;
+    for (const raw of String(text).split(/\r?\n/)) {
+      const c = clean(raw);
+      const m = HEAD_RE.exec(c);
+      if (m) {
+        const after = c.slice(m[0].length);
+        const colon = after.indexOf(': ');
+        cur = {
+          raw: [raw], rest: [], stamp: m[1],
+          sender: colon >= 0 ? after.slice(0, colon) : null,
+          body: colon >= 0 ? after.slice(colon + 2) : after,
+          system: colon < 0
+        };
+        entries.push(cur);
+      } else if (cur) {
+        cur.rest.push(raw);
+      } else {
+        entries.push({ raw: [raw], rest: [], pre: true });
+      }
+    }
+    return entries;
+  }
+
+  // ---------- Transformación de una incidencia ----------
+  // Devuelve { status: 'ok', mensajes: [[lineas...], ...], cambios: [...] }
+  //        | { status: 'borrar', motivo }
+  //        | { status: 'revisar', motivo }
+  // Un acta ("As 17609", "AS/35380") puede venir en cualquier parte de una línea, en cualquier zona.
+  // "As 17609", "AS/17609", "Acta 17609" (no "AC": eso es otra cosa).
+  const RE_ACTA_EN_LINEA = /\b(?:a\s*\/?\s*s\s*\/?\s*|acta(?:\s+de\s+secuestro)?:?\s*)(\d{4,})\b/i;
+  const RE_PALABRA_ACTA = /^(?:a\s*\/?\s*s|acta(?:\s+de\s+secuestro)?:?)\s*\/?\s*$/i;
+  // Si el acta va junto a otro texto, se separa como línea propia (el resto queda como línea aparte).
+  // Si "As" o "Acta" está en una línea y el número en la siguiente, se unen.
+  function separarActas(lineas) {
+    const out = [];
+    for (let k = 0; k < lineas.length; k++) {
+      const texto = clean(lineas[k]);
+      const sig = lineas[k + 1] !== undefined ? clean(lineas[k + 1]) : '';
+      if (RE_PALABRA_ACTA.test(texto) && /^\d{4,}$/.test(sig)) { out.push('AS' + sig); k++; continue; }
+      const m = RE_ACTA_EN_LINEA.exec(texto);
+      if (!m) { out.push(lineas[k]); continue; }
+      const antes = texto.slice(0, m.index);
+      const despues = texto.slice(m.index + m[0].length);
+      const resto = clean(antes + ' ' + despues);
+      if (resto) out.push(resto);
+      out.push('AS' + m[1]);
+    }
+    return out;
+  }
+
+  // "Pasteur 393 (esq. Corrientes)" → "Pasteur 393": el cruce no forma parte de la dirección.
+  // Si la calle no tiene altura ("Av. 9 de Julio esquina Lavalle"), el cruce pasa a ser una intersección: "Av. 9 de Julio y Lavalle".
+  const quitarEsquina = (l) => {
+    const s = clean(l).replace(/\s*\((?:esq\.?|esquina)[^)]*\)\s*$/i, '');
+    const m = /^(.*?)\s+(?:esq\.?|esquina)\s+(.*)$/i.exec(s);
+    if (!m) return s;
+    if (/\d{1,5}[a-z]?$/i.test(m[1])) return m[1]; // tiene altura: se saca el cruce
+    return m[1] + ' y ' + m[2].replace(/\.$/, '');
+  };
+
+  // "Av. Pres. Fig. Alcorta 2151 se visualiza manteros..." → dirección "Av. Figueroa Alcorta 2151" y el resto como comentario.
+  const RE_FIG_ABREV = /^(?:av\.?\s*)?(?:pres\.?\s*)?fig(?:ueroa|\.)?\s*\.?\s*alcorta\s+(\d{1,5}[a-z]?)\b\s*(.*)$/i;
+  function separarDireccionesAbreviadas(lineas) {
+    const out = [];
+    for (const l of lineas) {
+      const m = RE_FIG_ABREV.exec(clean(l));
+      if (!m) { out.push(l); continue; }
+      out.push('Av. Figueroa Alcorta ' + m[1]);
+      if (clean(m[2])) out.push(m[2]);
+    }
+    return out;
+  }
+
+  function corregirIncidencia(cap) {
+    // Número de reclamo ("Reclamo: S01246129/26"): va en el número de orden SAP.
+    const numeroReclamo = (/\b(S\d{5,}\/\d{2})\b/i.exec(cap[0] || '') || [])[1] || '';
+    cap = separarActas(separarDireccionesAbreviadas(cap.map(quitarEsquina)));
+    // Sin palabra de tipo pero con acta: es un secuestro.
+    if (!tipoOf(cap[0]) && cap.some((l) => RE_ACTA_EN_LINEA.test(clean(l)))) cap = ['Secuestro', ...cap];
+    // Todo en una sola línea: "Relevamiento Avellaneda Av nazca 277 sin incidencia"
+    const separada = partirLineaUnica(cap[0]);
+    if (separada) cap = [...separada, ...cap.slice(1)];
+    const tipo = tipoOf(cap[0]);
+    if (!tipo) return { status: 'revisar', motivo: 'tipo de incidencia no reconocido' };
+    if (cap.length < 2) return { status: 'revisar', motivo: 'formato incompleto' };
+
+    // "Cuenca 430 sin incidencias" en una sola línea: separar la dirección del resultado
+    cap = cap.flatMap((l) => {
+      const m = /^(.*\d.*?)\s+(sin\s+incidenc.*)$/i.exec(l);
+      return m ? [m[1], 'Sin incidencias'] : [l];
+    });
+
+    // Si la segunda línea es el acta ("As 17609") o una dirección, el mensaje no trae línea de zona.
+    const hayZona = cap[1] !== undefined && !actaOf(cap[1]) && clasificar(cap[1]) !== 'direccion';
+    let zona = hayZona ? zonaOf(cap[1]) : '';
+    const cambios = [];
+    let i = hayZona ? 2 : 1;
+    let direccion = '';
+    if (cap[i] !== undefined && clasificar(cap[i]) === 'direccion') { direccion = clean(cap[i]); i++; }
+
+    // Revisar líneas siguientes buscando dirección si no estaba en el lugar esperado
+    const resto = cap.slice(i);
+    // "La Rural" tiene sus propias reglas; otras zonas "rurales" usan las de Cerviño.
+    const claveRegla = /^la rural$/i.test(zona) ? 'La Rural' : (/rural/i.test(zona) ? 'Cerviño' : zona);
+    // Correcciones compartidas con SISEP (compartido/calles.js) + las propias de cada zona.
+    const corrComp = ((root.CALLES_COMPARTIDAS || {}).correcciones) || [];
+    const reglas = [...corrComp.filter((c) => c.zona === '*' || c.zona === claveRegla), ...(REGLAS_DIRECCION[claveRegla] || [])];
+    // Sin dirección, una línea de texto que coincide con una regla de la zona es la dirección
+    // ("Lima oeste", "Centro de trasbordo", "Metrobús Brasil"). Se toma y no queda como comentario.
+    const pista = !direccion ? resto.map(clean).find((l) => clasificar(l) === 'comentario' && reglas.some((r) => r.re.test(l))) : undefined;
+    if (pista) direccion = pista;
+    // "Recorrida por Av Rivadavia, Rivadavia y J.l. suares, Montiel." → se toma la primera intersección.
+    const recorrida = resto.map(clean).find((l) => /^recorrida\b/i.test(l));
+    if (recorrida && !direccion) {
+      const seg = recorrida.replace(/^recorrida\s+por\s+/i, '').split(',').map(clean).find((s) => / y /i.test(s));
+      if (seg) direccion = seg;
+    }
+    // "Plazoleta del Obelisco" sin calle: se carga como Corrientes y Cerrito, tomada como zona Corrientes Cultural.
+    const plazaLinea = !direccion ? resto.map(clean).find((l) => /\bplazoleta\b/i.test(l)) : undefined;
+    if (plazaLinea) {
+      cambios.push({ tipo: 'plazoleta: zona y dirección', de: plazaLinea, a: 'Corrientes Cultural · Corrientes y Cerrito' });
+      zona = 'Corrientes Cultural';
+      direccion = 'Corrientes y Cerrito';
+    }
+    let acts = [], detalles = [], infra = null, tieneSin = false;
+    for (let l of resto) {
+      if (pista && clean(l) === pista) continue;
+      if (recorrida && clean(l) === recorrida) continue;
+      if (plazaLinea && clean(l) === plazaLinea) continue;
+      const k = clasificar(l);
+      if (k === 'acta') acts.push(actaOf(l));
+      else if (k === 'sin') tieneSin = true;
+      else if (k === 'detalle') detalles.push(fixTypos(l));
+      else if (k === 'grupo') detalles.push(GRUPOS.exec(l)[1].toUpperCase()); // SAME, POLICIA, etc.: se conserva
+      else if (k === 'infractor') infra = infra || infractorOf(l);
+      else if (k === 'direccion' && !direccion) direccion = clean(l);
+      else if (k === 'comentario') cambios.push({ tipo: 'comentario borrado', de: clean(l) });
+    }
+
+    // Reglas de dirección por zona
+    for (const r of reglas) {
+      const m = r.re.exec(direccion);
+      if (!m) continue;
+      const antes = direccion;
+      direccion = r.to !== undefined ? r.to : direccion.replace(m[0], r.fn(m));
+      if (direccion !== antes) cambios.push({ tipo: 'dirección', de: antes, a: direccion });
+    }
+
+    // Si la dirección repite el tipo o la zona ("Relevamiento Florida 716"), se quita
+    direccion = direccion.replace(/^(re[lv]e[lv]amiento|secuestr\w*|decomis\w*|hoja de ruta|punto cr\w*)\s+/i, '');
+
+    if (!direccion) {
+      if (tipo === 'Secuestro') return { status: 'borrar', motivo: 'secuestro sin dirección' };
+      if (FALLBACK_SIN_DIRECCION[zona]) {
+        direccion = FALLBACK_SIN_DIRECCION[zona];
+        cambios.push({ tipo: 'dirección (sin dirección)', de: '', a: direccion });
+      } else {
+        return { status: 'revisar', motivo: 'sin dirección y la zona no tiene regla' };
+      }
+    }
+
+    // Normalizar nombre de calle y altura, y detectar tipeos
+    const nd = normalizarDireccion(direccion, zona);
+    if (nd.direccion !== direccion) cambios.push({ tipo: 'calle normalizada', de: direccion, a: nd.direccion });
+    direccion = nd.direccion;
+    // 11 de Septiembre termina en 2000 en el callejero: alturas mayores se cargan como 2000.
+    const alturaMax = /^(11 de Septiembre)\s+(\d+)$/i.exec(direccion);
+    if (alturaMax && Number(alturaMax[2]) > 2000) {
+      const antes = direccion;
+      direccion = alturaMax[1] + ' 2000';
+      cambios.push({ tipo: 'altura mayor a 2000 (11 de Septiembre)', de: antes, a: direccion });
+    }
+    const avisos = nd.avisos;
+
+    if (!/\d/.test(direccion) && !/ y /i.test(direccion)) {
+      return { status: 'revisar', motivo: 'dirección sin numeración ni intersección: "' + direccion + '"' };
+    }
+
+    if (tipo === 'Secuestro') {
+      const actasValidas = acts.filter(Boolean);
+      if (!actasValidas.length) return { status: 'borrar', motivo: 'secuestro sin número de acta' };
+      const ultimo = infra || 'PUESTO DE VENTA AMBULANTE';
+      if (!infra) cambios.push({ tipo: 'infractor por defecto', de: '', a: ultimo });
+      const mensajes = actasValidas.map((a) => [tipo, zona, direccion, a, ...detalles, ultimo].filter((x) => x !== ''));
+      return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion };
+    }
+
+    // Eventos: Disuasión → Evento – Disuasión – infractor (MANTERO si no se nombra otro). Evento sin disuasión → Evento – Relevamiento – Sin incidencias.
+    // Reclamo: categoría Reclamo, "Sin incidencias" como detalle. El número de reclamo va aparte (orden SAP).
+    if (tipo === 'Reclamo') {
+      const mensajes = [['Reclamo', zona, direccion, 'Sin incidencias'].filter((x) => x !== '')];
+      return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion, reclamo: numeroReclamo };
+    }
+    if (tipo === 'Disuasión' || tipo === 'Evento') {
+      const clasifEv = tipo === 'Disuasión' ? 'Disuasión' : 'Relevamiento';
+      const ultimoEv = tipo === 'Disuasión' ? (infra || 'MANTERO') : 'Sin incidencias';
+      const mensajes = [['Evento', zona, direccion, clasifEv, ultimoEv].filter((x) => x !== '')];
+      return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion };
+    }
+
+    // Sin secuestro, la subclasificación es siempre "Sin incidencias" (el infractor se descarta).
+    if (infra) cambios.push({ tipo: 'infractor quitado (sin secuestro)', de: infra, a: 'Sin incidencias' });
+    const ultimo = 'Sin incidencias';
+    const mensajes = [[tipo, zona, direccion, ...detalles, ultimo].filter((x) => x !== '')];
+    return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion };
+  }
+
+  // ---------- Filas para Urbetrack (mismo formato que el Excel de la página) ----------
+  const COLUMNAS_URBETRACK = ['categoria', 'date', 'time', 'datetime', 'weekday', 'files', 'caption', 'grupo',
+    'tipoServicio', 'detalleServicio', 'codigo', 'precinto', 'numeroOrdenSap', 'direccion', 'solicitante',
+    'turno', 'contexto', 'punto', 'comentario', 'usarComentario', 'estado', 'observaciones'];
+  const DIAS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  function fechaDeStamp(stamp) {
+    const m = /(\d{1,2})\/(\d{1,2})\/(\d{4}), (\d{1,2}):(\d{2})(?::\d{2})?\s?([ap])\.?\s?m\./i.exec(stamp);
+    if (!m) return null;
+    let h = parseInt(m[4], 10);
+    if (/p/i.test(m[6]) && h < 12) h += 12;
+    if (/a/i.test(m[6]) && h === 12) h = 0;
+    const dd = m[1].padStart(2, '0'), mm = m[2].padStart(2, '0');
+    const fecha = dd + '/' + mm + '/' + m[3];
+    const hh = String(h).padStart(2, '0');
+    const dia = DIAS[new Date(Date.UTC(+m[3], +m[2] - 1, +m[1])).getUTCDay()];
+    return { date: fecha, time: h + ':' + m[5], datetime: fecha + ' ' + hh + ':' + m[5], weekday: dia };
+  }
+
+  function filaUrbetrack(e, m, archivo, direccion, reclamo) {
+    const f = fechaDeStamp(e.stamp) || { date: '', time: '', datetime: '', weekday: '' };
+    const tipo = m[0];
+    const sec = tipo === 'Secuestro';
+    const acta = sec ? (m.find((x) => /^AS\d+$/.test(x)) || '') : '';
+    const evento = tipo === 'Evento';
+    // Hoja de ruta, punto crónico y patrulla: la categoría va en el grupo, y el tipo de servicio queda en RELEVAMIENTO.
+    const especial = ['Hoja de ruta', 'Punto crónico', 'Patrulla', 'Reclamo'].includes(tipo);
+    const grupo = sec ? 'OFICIO' : evento ? 'EVENTO' : especial ? tipo.toUpperCase() : 'RELEVAMIENTO';
+    const fila = {
+      categoria: sec ? 'SECUESTRO' : 'CHECKPOINT',
+      date: f.date, time: f.time, datetime: f.datetime, weekday: f.weekday,
+      files: archivo ? [archivo] : [],
+      caption: m.join('\n'),
+      grupo,
+      tipoServicio: sec ? 'SECUESTRO' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
+      detalleServicio: m[m.length - 1].toUpperCase(),
+      codigo: acta,
+      precinto: '', numeroOrdenSap: reclamo || '',
+      direccion,
+      solicitante: 'OPERATIVO',
+      turno: 'DIURNO SADOFE',
+      contexto: 'RELEVAMIENTO ' + f.date + ' (sin aviso previo)',
+      punto: '', comentario: '', usarComentario: '',
+      estado: 'OK', observaciones: ''
+    };
+    return fila;
+  }
+
+  // ---------- Escritor de .xlsx mínimo (sin librerías) ----------
+  const CRC_TABLA = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(bytes) {
+    let crc = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) crc = CRC_TABLA[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+    return (crc ^ 0xFFFFFFFF) >>> 0;
+  }
+  function escXml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function zip(archivos) {
+    const enc = new TextEncoder();
+    const partes = [], central = [];
+    let offset = 0;
+    const fecha = ((2026 - 1980) << 9) | (11 << 5) | 22;
+    for (const a of archivos) {
+      const nombre = enc.encode(a.nombre), datos = enc.encode(a.texto);
+      const crc = crc32(datos);
+      const cab = new DataView(new ArrayBuffer(30));
+      cab.setUint32(0, 0x04034b50, true); cab.setUint16(4, 20, true); cab.setUint16(6, 0x0800, true);
+      cab.setUint16(8, 0, true); cab.setUint16(10, 0, true); cab.setUint16(12, fecha, true);
+      cab.setUint32(14, crc, true); cab.setUint32(18, datos.length, true); cab.setUint32(22, datos.length, true);
+      cab.setUint16(26, nombre.length, true); cab.setUint16(28, 0, true);
+      partes.push(new Uint8Array(cab.buffer), nombre, datos);
+      const cd = new DataView(new ArrayBuffer(46));
+      cd.setUint32(0, 0x02014b50, true); cd.setUint16(4, 20, true); cd.setUint16(6, 20, true);
+      cd.setUint16(8, 0x0800, true); cd.setUint16(10, 0, true); cd.setUint16(12, 0, true); cd.setUint16(14, fecha, true);
+      cd.setUint32(16, crc, true); cd.setUint32(20, datos.length, true); cd.setUint32(24, datos.length, true);
+      cd.setUint16(28, nombre.length, true); cd.setUint16(30, 0, true); cd.setUint16(32, 0, true);
+      cd.setUint16(34, 0, true); cd.setUint16(36, 0, true); cd.setUint32(38, 0, true); cd.setUint32(42, offset, true);
+      central.push(new Uint8Array(cd.buffer), nombre);
+      offset += 30 + nombre.length + datos.length;
+    }
+    const cdTam = central.reduce((s, p) => s + p.length, 0);
+    const fin = new DataView(new ArrayBuffer(22));
+    fin.setUint32(0, 0x06054b50, true); fin.setUint16(8, archivos.length, true); fin.setUint16(10, archivos.length, true);
+    fin.setUint32(12, cdTam, true); fin.setUint32(16, offset, true);
+    const todo = [...partes, ...central, new Uint8Array(fin.buffer)];
+    const total = todo.reduce((s, p) => s + p.length, 0);
+    const out = new Uint8Array(total);
+    let pos = 0;
+    for (const p of todo) { out.set(p, pos); pos += p.length; }
+    return out;
+  }
+  function crearXlsx(columnas, filas, nombreHoja) {
+    const col = (i) => String.fromCharCode(65 + i);
+    const celda = (v, r, c) => (v === '' || v === undefined || v === null) ? '' :
+      '<c r="' + col(c) + r + '" t="inlineStr"><is><t xml:space="preserve">' + escXml(v) + '</t></is></c>';
+    let xmlFilas = '<row r="1">' + columnas.map((h, c) => celda(h, 1, c)).join('') + '</row>';
+    filas.forEach((f, i) => {
+      const r = i + 2;
+      xmlFilas += '<row r="' + r + '">' + columnas.map((h, c) => celda(f[h], r, c)).join('') + '</row>';
+    });
+    const hoja = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' + xmlFilas + '</sheetData></worksheet>';
+    const libro = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+      '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<sheets><sheet name="' + escXml(nombreHoja || 'Incidencias') + '" sheetId="1" r:id="rId1"/></sheets></workbook>';
+    return zip([
+      { nombre: '[Content_Types].xml', texto: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>' },
+      { nombre: '_rels/.rels', texto: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>' },
+      { nombre: 'xl/workbook.xml', texto: libro },
+      { nombre: 'xl/_rels/workbook.xml.rels', texto: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>' },
+      { nombre: 'xl/worksheets/sheet1.xml', texto: hoja }
+    ]);
+  }
+
+  // ---------- Unión de texto y foto ----------
+  // La foto puede llegar hasta 5 minutos antes o después del texto del mismo remitente.
+  // Si el texto no tiene foto y hay una foto libre (sin texto) dentro de esa ventana, se unen en un solo mensaje.
+  const VENTANA_TEXTO_FOTO_MS = 5 * 60 * 1000;
+  const esMedio = (e) => /\(archivo adjunto\)\s*$/i.test(e.body) || /^<Multimedia omitido>/i.test(e.body) || /^IMG-/i.test(e.body);
+  const esIncidenciaTexto = (e) => !e.pre && !e.system && !esMedio(e)
+    && /^(re[lv]e[lv]amiento|secuestr|decomis|hoja|punto|patrulla|derivad|disuasi|evento|reclamo)/i.test(clean(e.body));
+  function momento(e) {
+    const f = fechaDeStamp(e.stamp);
+    if (!f) return NaN;
+    const [d, mo, y] = f.date.split('/').map(Number);
+    const [h, mi] = f.time.split(':').map(Number);
+    return new Date(y, mo - 1, d, h, mi).getTime();
+  }
+  function unirTextoConFoto(entries) {
+    const fotosLibres = entries.filter((e) => !e.pre && !e.system && esMedio(e) && e.rest.map(clean).filter(Boolean).length === 0);
+    const usadas = new Set(), quitar = new Set();
+    for (const t of entries) {
+      if (!esIncidenciaTexto(t)) continue;
+      const tt = momento(t);
+      let mejor = null, mejorDist = Infinity;
+      for (const f of fotosLibres) {
+        if (usadas.has(f) || f.sender !== t.sender) continue;
+        const dist = Math.abs(momento(f) - tt);
+        if (dist <= VENTANA_TEXTO_FOTO_MS && dist < mejorDist) { mejor = f; mejorDist = dist; }
+      }
+      if (!mejor) continue;
+      usadas.add(mejor); quitar.add(t);
+      mejor.rest = [t.body, ...t.rest]; // el texto pasa a ser el pie de la foto
+    }
+    return entries.filter((e) => !quitar.has(e));
+  }
+
+  // ---------- Transformación del chat completo ----------
+  function transformar(text) {
+    const entries = unirTextoConFoto(parse(text));
+    const out = [];
+    const log = [];      // cambios y borrados
+    const revisar = [];  // dudas
+    const direcciones = []; // direcciones de las incidencias corregidas (para verificar con USIG)
+    const registros = [];   // filas para el Excel de Urbetrack
+    let stats = { mensajes: entries.length, incidencias: 0, corregidas: 0, borradas: 0, revisar: 0 };
+
+    for (const e of entries) {
+      if (e.pre || e.system) { out.push(...e.raw, ...e.rest); continue; }
+      const medio = /\(archivo adjunto\)\s*$/i.test(e.body) || /^<Multimedia omitido>/i.test(e.body) || /^IMG-/i.test(e.body);
+
+      if (medio) {
+        const cap = e.rest.map(clean).filter(Boolean);
+        if (!cap.length) { out.push(...e.raw, ...e.rest); continue; } // foto sin texto: se mantiene
+        stats.incidencias++;
+        const res = corregirIncidencia(cap);
+        // Foto con texto que no es una incidencia (ej. comentarios de la brigada): se borra
+        if (res.status === 'revisar' && /tipo de incidencia no reconocido/.test(res.motivo)) {
+          stats.borradas++;
+          log.push({ hora: e.stamp, accion: 'borrado', original: cap.join(' / '), motivo: 'foto con texto que no es incidencia' });
+          continue;
+        }
+        if (res.status === 'revisar') {
+          stats.revisar++;
+          revisar.push({ hora: e.stamp, original: cap.join(' / '), motivo: res.motivo });
+          out.push(...e.raw, ...e.rest);
+          continue;
+        }
+        if (res.status === 'borrar') {
+          stats.borradas++;
+          log.push({ hora: e.stamp, accion: 'borrado', original: cap.join(' / '), motivo: res.motivo });
+          continue;
+        }
+        stats.corregidas++;
+        for (const m of res.mensajes) direcciones.push({ hora: e.stamp, direccion: res.direccion });
+        const archivo = (/(IMG-[^\s]+?\.\w+)/i.exec(e.body) || [])[1] || '';
+        for (const m of res.mensajes) {
+          const fila = filaUrbetrack(e, m, archivo, res.direccion, res.reclamo);
+          const ult = registros[registros.length - 1];
+          // Igual que la página original: la foto y su copia "<Multimedia omitido>" son una sola fila
+          if (ult && ult.caption === fila.caption) {
+            if (archivo && !ult.files.includes(archivo)) ult.files.push(archivo);
+          } else {
+            registros.push(fila);
+          }
+        }
+        for (const av of res.avisos || []) {
+          // Un tipeo corregido se considera bien hecho: queda en "Cambios y borrados", no en "Para revisar".
+          if (/^tipeo corregido/i.test(av)) continue;
+          stats.revisar++;
+          revisar.push({ hora: e.stamp, original: res.mensajes[0].join(' / '), motivo: av });
+        }
+        const cabecera = e.stamp + ' - ' + e.sender + ': ' + e.body;
+        const cambiado = res.mensajes.length > 1 || res.mensajes[0].join('\n') !== cap.join('\n') || res.cambios.length > 0;
+        for (const m of res.mensajes) {
+          out.push(cabecera);
+          out.push(...m);
+        }
+        if (cambiado) {
+          log.push({
+            hora: e.stamp, accion: res.mensajes.length > 1 ? 'separado en ' + res.mensajes.length + ' actas' : 'corregido',
+            original: cap.join(' / '), nuevo: res.mensajes.map((m) => m.join(' / ')).join(' || '),
+            cambios: res.cambios.map((c) => (c.tipo + ': ' + (c.de || '') + (c.a ? ' → ' + c.a : '')).trim())
+          });
+        }
+        continue;
+      }
+
+      // Mensaje de texto sin foto
+      const cuerpo = [e.body, ...e.rest].map(clean).filter(Boolean);
+      if (/^Se eliminó este mensaje/i.test(e.body)) {
+        log.push({ hora: e.stamp, accion: 'borrado', original: e.body, motivo: 'mensaje eliminado' });
+        continue;
+      }
+      if (cuerpo.length && tipoOf(cuerpo[0]) && /^(re[lv]e[lv]amiento|secuestr|decomis|hoja|punto|patrulla|derivad|disuasi|evento|reclamo)/i.test(cuerpo[0])) {
+        stats.revisar++;
+        revisar.push({ hora: e.stamp, original: cuerpo.join(' / '), motivo: 'incidencia sin foto: se mantiene' });
+        out.push(...e.raw, ...e.rest);
+        continue;
+      }
+      log.push({ hora: e.stamp, accion: 'borrado', original: cuerpo.join(' / ').slice(0, 120), motivo: 'texto sin foto que no es incidencia' });
+    }
+
+    return { texto: out.join('\n'), log, revisar, stats, direcciones, registros };
+  }
+
+  const api = { transformar, corregirIncidencia, parse, clasificar, normalizarDireccion, normalizarNombre, registrarCalle, esVerificada, crearXlsx, COLUMNAS_URBETRACK, INFRACTORES, ZONAS, CALLES };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+  else root.UrbeTransform = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  const engine = window.UrbeTransform;
+  const $ = (id) => document.getElementById(id);
+  let archivo = null, texto = '', resultado = null;
+
+  function escapar(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+  function setArchivo(f) {
+    archivo = f;
+    $('fname').textContent = f ? f.name : 'Todavía no hay archivo';
+    $('fname').classList.toggle('picked', !!f);
+    $('procesar').disabled = !f;
+    $('descargar').disabled = true; $('descargarReporte').disabled = true; $('descargarXlsx').disabled = true;
+    $('resultado').hidden = true; $('dudas').hidden = true; $('cambios').hidden = true;
+  }
+
+  $('file').addEventListener('change', (e) => setArchivo(e.target.files[0]));
+  const drop = $('drop');
+  ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => setArchivo(e.dataTransfer.files[0]));
+
+  // "DE LA TORRE, LISANDRO AV." → "Lisandro de la Torre"
+  const CONECTORES_UI = ['de', 'del', 'la', 'las', 'los', 'y', 'e', 'el'];
+  const sinAc = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function nombreOficial(calle) {
+    let s = String(calle).replace(/\s+(AV|CALLE|PJE|PASAJE)\.?$/i, '').replace(/^del\s+/i, '').trim();
+    if (s.includes(',')) { const [a, b] = s.split(',').map((x) => x.trim()); s = b + ' ' + a; }
+    return s.split(/\s+/).map((p, i) => (i > 0 && CONECTORES_UI.includes(p.toLowerCase()) ? p.toLowerCase()
+      : p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())).join(' ');
+  }
+
+  // Todas las palabras del nombre escrito (3+ letras) deben aparecer en el nombre oficial.
+  function parecida(escrito, oficial) {
+    const tokens = (s) => sinAc(s).replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((t) => t.length >= 3);
+    const a = tokens(escrito), b = tokens(oficial);
+    return a.length > 0 && a.every((t) => b.includes(t));
+  }
+
+  // Calles que el motor no reconoce: se busca cada una en USIG con una altura de esa calle y se usa su nombre oficial.
+  // Devuelve true si se aprendió alguna calle nueva (hay que volver a convertir el chat).
+  async function resolverCalles(res, progreso) {
+    const nombres = new Set();
+    for (const r of res.revisar) {
+      const m = /calle no reconocida: "([^"]+)"/.exec(r.motivo);
+      if (m) nombres.add(m[1]);
+    }
+    let aprendidas = false, n = 0;
+    for (const nombre of nombres) {
+      n++; progreso(n, nombres.size);
+      const base = sinAc(nombre);
+      let altura = null;
+      for (const d of res.direcciones) {
+        const m = /^(.*?)\s+(\d{1,5}[a-z]?)$/i.exec(d.direccion.replace(/^Av\.\s+/, ''));
+        if (m && sinAc(m[1]) === base) { altura = m[2]; break; }
+      }
+      if (!altura) continue;
+      try {
+        const qs = new URLSearchParams({ calle: nombre, altura, desambiguar: '1' });
+        const r = await fetch('https://ws.usig.buenosaires.gob.ar/rest/normalizar_y_geocodificar_direcciones?' + qs);
+        const datos = await r.json();
+        const norm = datos.Normalizacion || {};
+        const dirs = (norm.DireccionesCalleAltura && norm.DireccionesCalleAltura.direcciones) || [];
+        if (norm.TipoResultado === 'DireccionNormalizada' && dirs.length) {
+          const oficial = nombreOficial(dirs[0].Calle);
+          // USIG a veces "adivina" otra calle (Aguaí 2050 → Paraguay). Solo se acepta si las palabras coinciden.
+          if (parecida(nombre, oficial)) { engine.registrarCalle(oficial); aprendidas = true; }
+        }
+      } catch (e) {
+        return aprendidas; // si falla, sigue la verificación normal, que avisa del problema
+      }
+    }
+    return aprendidas;
+  }
+
+  // Verifica cada dirección con el geocodificador de USIG (el mismo que usa la página de comunas).
+  async function verificarUsig(res, progreso) {
+    const unicas = [...new Map(res.direcciones.map((d) => [d.direccion, d])).values()];
+    let n = 0;
+    for (const d of unicas) {
+      n++; progreso(n, unicas.length);
+      if (/ y /i.test(d.direccion)) continue; // intersecciones: se revisan a mano
+      const m = /^(.*?)\s+(\d{1,5}[a-z]?)$/i.exec(d.direccion);
+      if (!m) continue;
+      if (engine.esVerificada(m[1].replace(/^Av\.\s+/, ''), m[2])) continue; // confirmada a mano en el callejero
+      const qs = new URLSearchParams({ calle: m[1].replace(/^Av\.\s+/, 'Av '), altura: m[2], desambiguar: '1' });
+      try {
+        const r = await fetch('https://ws.usig.buenosaires.gob.ar/rest/normalizar_y_geocodificar_direcciones?' + qs);
+        const datos = await r.json();
+        const norm = datos.Normalizacion || {};
+        const ok = norm.TipoResultado === 'DireccionNormalizada';
+        // "Ambiguedad": USIG encontró la altura en varias calles con ese nombre. Vale si una coincide con el nombre escrito.
+        const candidatas = (norm.DireccionesCalleAltura && norm.DireccionesCalleAltura.direcciones) || [];
+        const ambiguo = norm.TipoResultado === 'Ambiguedad'
+          && candidatas.some((c) => parecida(m[1].replace(/^Av\.?\s+/i, ''), nombreOficial(c.Calle)));
+        if (!ok && !ambiguo) res.revisar.push({ hora: d.hora, original: d.direccion, motivo: 'USIG no encuentra esta dirección (revisar tipeo o altura)' });
+      } catch (e) {
+        return 'No se pudo consultar USIG. Revisá la conexión o desmarcá la opción.';
+      }
+    }
+    return null;
+  }
+
+  $('procesar').addEventListener('click', async () => {
+    if (!archivo) return;
+    texto = await archivo.text();
+    resultado = engine.transformar(texto);
+    let aviso = null;
+    if ($('usig').checked) {
+      $('procesar').disabled = true; $('procesar').textContent = 'Buscando calles...';
+      const aprendidas = await resolverCalles(resultado, (i, t) => { $('procesar').textContent = 'Calles ' + i + '/' + t; });
+      if (aprendidas) resultado = engine.transformar(texto);
+      $('procesar').textContent = 'Verificando calles...';
+      aviso = await verificarUsig(resultado, (i, t) => { $('procesar').textContent = 'USIG ' + i + '/' + t; });
+      $('procesar').disabled = false; $('procesar').textContent = 'Procesar chat';
+    }
+    const s = resultado.stats;
+    s.revisar = resultado.revisar.length;
+    if (aviso) resultado.revisar.push({ hora: '', original: '', motivo: aviso });
+    $('stats').innerHTML = [
+      ['Incidencias con foto', s.incidencias], ['Corregidas', s.corregidas],
+      ['Borradas', s.borradas], ['Para revisar', s.revisar]
+    ].map(([k, v]) => '<div class="stat"><b>' + v + '</b><span>' + k + '</span></div>').join('');
+    $('resultado').hidden = false;
+
+    $('dudasN').textContent = resultado.revisar.length;
+    $('tablaDudas').innerHTML = resultado.revisar.length
+      ? '<table><tr><th>Hora</th><th>Texto original</th><th>Motivo</th></tr>' +
+        resultado.revisar.map((x) => '<tr><td>' + escapar(x.hora) + '</td><td>' + escapar(x.original) + '</td><td><span class="tag t-warn">' + escapar(x.motivo) + '</span></td></tr>').join('') + '</table>'
+      : '<div class="empty">Nada para revisar.</div>';
+    $('dudas').hidden = false;
+
+    $('cambiosN').textContent = resultado.log.length;
+    $('tablaCambios').innerHTML = resultado.log.length
+      ? '<table><tr><th>Hora</th><th>Acción</th><th>Antes</th><th>Después / motivo</th></tr>' +
+        resultado.log.map((x) => {
+          const tag = x.accion === 'borrado' ? 't-bad' : (x.accion.startsWith('separado') ? 't-info' : 't-ok');
+          const despues = x.accion === 'borrado' ? escapar(x.motivo) : escapar(x.nuevo || '') + (x.cambios && x.cambios.length ? '<div class="muted">' + x.cambios.map(escapar).join('<br>') + '</div>' : '');
+          return '<tr><td>' + escapar(x.hora) + '</td><td><span class="tag ' + tag + '">' + escapar(x.accion) + '</span></td><td>' + escapar(x.original) + '</td><td>' + despues + '</td></tr>';
+        }).join('') + '</table>'
+      : '<div class="empty">Sin cambios.</div>';
+    $('cambios').hidden = false;
+
+    $('descargar').disabled = false; $('descargarReporte').disabled = false; $('descargarXlsx').disabled = false;
+  });
+
+  // Nombre como los archivos de la página de tu jefe: records-<perfil>-manual-<fecha>.xlsx
+  const PERFIL = 'distrito-govna';
+  $('descargarXlsx').addEventListener('click', () => {
+    if (!resultado) return;
+    const filas = resultado.registros.map((f) => ({ ...f, files: f.files.join('|') }));
+    const fechaIso = (filas[0] && filas[0].date) ? filas[0].date.split('/').reverse().join('-') : new Date().toISOString().slice(0, 10);
+    const bytes = engine.crearXlsx(engine.COLUMNAS_URBETRACK, filas, 'Incidencias');
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'records-' + PERFIL + '-manual-' + fechaIso + '.xlsx';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  function bajar(nombre, contenido) {
+    const url = URL.createObjectURL(new Blob([contenido], { type: 'text/plain;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = nombre; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  // Mismo nombre que el original
+  $('descargar').addEventListener('click', () => { if (resultado) bajar(archivo.name, resultado.texto); });
+
+  $('descargarReporte').addEventListener('click', () => {
+    if (!resultado) return;
+    const lineas = ['REPORTE - ' + archivo.name, ''];
+    lineas.push('Para revisar a mano (' + resultado.revisar.length + '):');
+    resultado.revisar.forEach((x) => lineas.push('  ' + x.hora + ' | ' + x.original + ' | ' + x.motivo));
+    lineas.push('', 'Cambios y borrados (' + resultado.log.length + '):');
+    resultado.log.forEach((x) => {
+      lineas.push('  ' + x.hora + ' [' + x.accion + '] ' + x.original);
+      if (x.nuevo) lineas.push('      → ' + x.nuevo);
+      if (x.motivo) lineas.push('      motivo: ' + x.motivo);
+      (x.cambios || []).forEach((c) => lineas.push('      ' + c));
+    });
+    bajar('reporte - ' + archivo.name.replace(/\.txt$/i, '') + '.txt', lineas.join('\n'));
+  });
+})();
+</script>
+</body>
+</html>

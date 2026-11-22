@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Conversor VNA → SISEP</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Superficies */
+    --bg: #f6f3fb;
+    --surface: #ffffff;
+    --surface-2: #faf8fd;
+    --line: #ebe5f4;
+    --line-2: #dcd3ec;
+    /* Texto */
+    --ink: #27223a;
+    --ink-2: #4a4462;
+    --muted: #7a7393;
+    /* Acento: lavanda */
+    --accent: #cdbdf7;
+    --accent-soft: #f1ecfe;
+    --accent-strong: #8b72de;
+    --accent-ink: #3b2a80;
+    /* Semánticos pastel */
+    --mint: #d6f2e4;   --mint-ink: #1d6845;   --mint-line: #b4e3cb;
+    --peach: #fde4d1;  --peach-ink: #924510;  --peach-line: #f8c9a6;
+    --rose: #fbdee5;   --rose-ink: #9c2e47;   --rose-line: #f4bccb;
+    --sky: #dbebfb;    --sky-ink: #235987;    --sky-line: #b7d5f3;
+    --stone: #efecf4;  --stone-ink: #6c6685;
+    /* Forma */
+    --r-lg: 22px;
+    --r-md: 14px;
+    --r-sm: 10px;
+    --shadow: 0 1px 2px rgba(39, 34, 58, .04), 0 12px 32px -16px rgba(59, 42, 128, .18);
+    --ring: 0 0 0 4px rgba(139, 114, 222, .22);
+    /* Tipografía */
+    --f-ui: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --f-display: 'Fraunces', Georgia, serif;
+    --f-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; font: 14px/1.55 var(--f-ui); color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(900px 500px at 0% -10%, #ebe3fd 0%, transparent 60%),
+      radial-gradient(700px 420px at 100% 0%, #dff3ea 0%, transparent 55%),
+      radial-gradient(800px 500px at 60% 110%, #fde9dc 0%, transparent 55%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app { max-width: 1480px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  /* ---------- Encabezado ---------- */
+  .top { display: grid; grid-template-columns: 1fr minmax(0, 440px); gap: 24px 48px; align-items: end; margin-bottom: 32px; }
+  .brand { display: flex; gap: 16px; align-items: center; }
+  .logo {
+    flex: none; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center;
+    background: linear-gradient(140deg, #d9ccfb, #c4ecd9); color: var(--accent-ink);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .6), var(--shadow);
+  }
+  .eyebrow { margin: 0 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-strong); }
+  h1 { margin: 0; font: 600 34px/1.1 var(--f-display); font-variation-settings: 'SOFT' 100; letter-spacing: -.01em; }
+  h1 .arrow { color: var(--accent-strong); font-weight: 500; }
+  .lede { margin: 0; color: var(--ink-2); font-size: 14.5px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px 4px 8px;
+    border-radius: 99px; background: var(--mint); color: var(--mint-ink); font-size: 12px; font-weight: 600;
+  }
+
+  /* ---------- Tarjetas y pasos ---------- */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 24px; margin-bottom: 20px; box-shadow: var(--shadow); }
+  .step-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; }
+  .step-head.between { justify-content: space-between; flex-wrap: wrap; }
+  .step-head .grow { display: flex; gap: 14px; align-items: flex-start; }
+  .step-num {
+    flex: none; width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--accent-ink); font: 600 15px/1 var(--f-display);
+  }
+  h2 { margin: 2px 0 2px; font: 600 19px/1.3 var(--f-display); font-variation-settings: 'SOFT' 100; }
+  .step-head p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1.25fr; gap: 20px; }
+  .two-col > .card { margin-bottom: 0; }
+
+  /* ---------- Zonas de carga ---------- */
+  .drops { display: grid; gap: 12px; }
+  .drop {
+    position: relative; display: flex; gap: 14px; align-items: center; padding: 16px 18px;
+    border: 1.5px dashed var(--line-2); border-radius: var(--r-md); background: var(--surface-2);
+    cursor: pointer; transition: border-color .15s, background .15s, transform .15s;
+  }
+  .drop:hover { border-color: var(--accent-strong); background: var(--accent-soft); }
+  .drop:focus-within { border-color: var(--accent-strong); box-shadow: var(--ring); }
+  .drop.has-file { border-style: solid; border-color: var(--mint-line); background: #f3fbf7; }
+  .drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+  .drop-icon {
+    flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--surface); border: 1px solid var(--line); color: var(--accent-strong);
+  }
+  .drop.has-file .drop-icon { color: var(--mint-ink); border-color: var(--mint-line); background: var(--mint); }
+  .drop-text { display: flex; flex-direction: column; min-width: 0; }
+  .drop-title { font-weight: 600; }
+  .drop-hint { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drop.has-file .drop-hint { color: var(--mint-ink); font-weight: 500; }
+  .opt { font-style: normal; font-weight: 500; font-size: 11.5px; color: var(--muted); background: var(--stone); padding: 1px 7px; border-radius: 99px; margin-left: 6px; }
+
+  /* ---------- Formularios ---------- */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field-label { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+  select, input[type=text], input[type=number] {
+    font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line-2);
+    border-radius: var(--r-sm); padding: 9px 12px; min-height: 40px; transition: border-color .15s, box-shadow .15s;
+  }
+  select {
+    appearance: none; -webkit-appearance: none; padding-right: 36px; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7393' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center;
+  }
+  select:hover, input[type=text]:hover, input[type=number]:hover { border-color: #c6bbdc; }
+  select:focus, input:focus { outline: none; border-color: var(--accent-strong); box-shadow: var(--ring); }
+  .suffix { position: relative; }
+  .suffix input { width: 100%; padding-right: 48px; }
+  .suffix span { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+
+  .toggles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+  .toggle {
+    position: relative; display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); cursor: pointer; transition: background .15s;
+  }
+  .toggle:hover { background: var(--accent-soft); }
+  .toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .switch { flex: none; position: relative; width: 38px; height: 22px; margin-top: 1px; border-radius: 99px; background: var(--line-2); transition: background .2s; }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 3px rgba(39, 34, 58, .2); transition: transform .2s cubic-bezier(.3, .7, .4, 1);
+  }
+  .toggle input:checked + .switch { background: var(--accent-strong); }
+  .toggle input:checked + .switch::after { transform: translateX(16px); }
+  .toggle input:focus-visible + .switch { box-shadow: var(--ring); }
+  .toggle b { display: block; font-weight: 600; font-size: 13.5px; }
+  .toggle small { display: block; color: var(--muted); font-size: 12.5px; }
+
+  /* ---------- Botones ---------- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-ui); border: 0; border-radius: 12px;
+    padding: 12px 18px; min-height: 44px; cursor: pointer; transition: transform .12s, box-shadow .15s, background .15s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: none; box-shadow: var(--ring); }
+  .btn-primary { background: var(--accent-strong); color: #fff; box-shadow: 0 6px 16px -8px rgba(139, 114, 222, .8); }
+  .btn-primary:hover { background: #7a60d3; }
+  .btn-ghost {
+    background: var(--surface); color: var(--accent-ink); border: 1px solid var(--line-2);
+    padding: 6px 10px; min-height: 0; font-size: 12px; border-radius: 8px; margin-top: 6px; font-weight: 600;
+  }
+  .btn-ghost:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; }
+  .check { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: 13px; cursor: pointer; }
+  .check small { color: var(--muted); }
+  input[type=checkbox] { accent-color: var(--accent-strong); width: 16px; height: 16px; cursor: pointer; }
+
+  /* ---------- Resumen ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .stats:empty { display: none; }
+  .stat { padding: 14px 16px; border-radius: var(--r-md); background: var(--stone); border: 1px solid transparent; }
+  .stat-n { display: block; font: 600 28px/1.1 var(--f-display); font-variation-settings: 'SOFT' 100; }
+  .stat-l { font-size: 12.5px; font-weight: 600; opacity: .85; }
+  .stat.s-total { background: var(--accent-soft); color: var(--accent-ink); border-color: #e2d9fb; }
+  .stat.s-lista { background: var(--mint); color: var(--mint-ink); border-color: var(--mint-line); }
+  .stat.s-revisar { background: var(--peach); color: var(--peach-ink); border-color: var(--peach-line); }
+  .stat.s-nocarga { background: var(--stone); color: var(--stone-ink); }
+  .stat.s-altura { background: var(--sky); color: var(--sky-ink); border-color: var(--sky-line); }
+
+  .aviso {
+    display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; margin-bottom: 16px; border-radius: var(--r-md);
+    background: #fff6ee; border: 1px solid var(--peach-line); color: var(--peach-ink); font-size: 13.5px;
+  }
+  .aviso svg { flex: none; margin-top: 2px; }
+
+  /* ---------- Tabla ---------- */
+  .table-wrap { margin-top: 20px; border: 1px solid var(--line); border-radius: var(--r-md); overflow: auto; max-height: 72vh; background: var(--surface); }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; font-size: 13px; }
+  th {
+    position: sticky; top: 0; z-index: 1; text-align: left; white-space: nowrap; padding: 11px 12px;
+    background: #f8f6fc; color: var(--muted); font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    border-bottom: 1px solid var(--line);
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr { transition: background .12s; }
+  tbody tr:hover { background: #fcfbfe; }
+  tbody tr.r-revisar td:first-child { box-shadow: inset 3px 0 0 var(--peach-line); }
+  tbody tr.r-lista td:first-child { box-shadow: inset 3px 0 0 var(--mint-line); }
+  tbody tr.r-nocarga { color: var(--muted); }
+  tbody tr.r-nocarga td { background: #fbfafc; }
+  td.num { color: var(--muted); font-family: var(--f-mono); font-size: 12px; }
+  td.fecha { white-space: nowrap; font-family: var(--f-mono); font-size: 12px; color: var(--ink-2); }
+  td input[type=text], td select { width: 100%; min-height: 34px; padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  td select { padding-right: 30px; background-position: right 9px center; }
+  td.c-dir { min-width: 200px; }
+  td.c-sel { min-width: 160px; }
+  td.c-acta { min-width: 120px; }
+  td.c-acta input { font-family: var(--f-mono); font-size: 12.5px; }
+  td.c-notas { min-width: 240px; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .lista { background: var(--mint); color: var(--mint-ink); }
+  .revisar { background: var(--peach); color: var(--peach-ink); }
+  .nocarga { background: var(--stone); color: var(--stone-ink); }
+  .fotos { display: inline-grid; place-items: center; min-width: 28px; height: 24px; padding: 0 8px; border-radius: 8px; background: var(--sky); color: var(--sky-ink); font-weight: 600; font-size: 12px; }
+  .fotos.cero { background: var(--rose); color: var(--rose-ink); }
+  .err { display: flex; gap: 6px; color: var(--rose-ink); font-size: 12.5px; line-height: 1.45; margin-bottom: 4px; }
+  .err::before { content: ""; flex: none; width: 6px; height: 6px; border-radius: 50%; background: #e98aa1; margin-top: 6px; }
+  .nota { color: var(--muted); font-size: 12px; line-height: 1.45; padding: 4px 8px; margin-bottom: 4px; border-radius: 6px; background: var(--surface-2); border-left: 2px solid var(--sky-line); }
+
+  .empty { text-align: center; padding: 48px 24px; margin-top: 20px; border: 1.5px dashed var(--line-2); border-radius: var(--r-md); color: var(--muted); background: var(--surface-2); }
+  .empty-icon { width: 56px; height: 56px; margin: 0 auto 12px; border-radius: 18px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-strong); }
+  .empty b { display: block; color: var(--ink); font: 600 17px/1.3 var(--f-display); margin-bottom: 4px; }
+
+  @media (max-width: 900px) {
+    .top, .two-col { grid-template-columns: 1fr; }
+    .two-col > .card { margin-bottom: 20px; }
+  }
+  @media (max-width: 560px) {
+    .app { padding: 24px 16px 56px; }
+    h1 { font-size: 28px; }
+    .card { padding: 18px; border-radius: 18px; }
+    .btn-primary { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<a href="../index.html" style="display:inline-flex;align-items:center;gap:6px;margin:20px 0 0 max(24px, calc(50% - 740px));padding:8px 14px;border-radius:999px;background:#fff;border:1px solid #ebe5f4;color:#3b2a80;font:600 13px/1 system-ui,-apple-system,'Segoe UI',sans-serif;text-decoration:none;">← Volver al inicio</a>
+<div class="app">
+
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11"/><path d="m12 4 3 3-3 3"/><path d="M20 17H9"/><path d="m12 14-3 3 3 3"/></svg>
+    </span>
+    <div>
+      <p class="eyebrow">Herramientas GCBA · Carga en SISEP</p>
+      <h1>Conversor VNA <span class="arrow">→</span> JSON</h1>
+    </div>
+  </div>
+  <div>
+    <p class="lede">Subí el chat exportado, definí el perfil del operativo y revisá cada fila antes de descargar el JSON para el script de carga.</p>
+    <span class="chip">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Todo se procesa en tu navegador
+    </span>
+  </div>
+</header>
+
+<div class="two-col">
+  <section class="card">
+    <div class="step-head">
+      <span class="step-num">1</span>
+      <div><h2>Chat y fotos</h2><p>El .txt exportado del grupo y, si querés, la carpeta de fotos.</p></div>
+    </div>
+    <div class="drops">
+      <label class="drop" id="dropChat">
+        <input type="file" id="chat" accept=".txt">
+        <span class="drop-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </span>
+        <span class="drop-text">
+          <span class="drop-title">Chat exportado</span>
+          <span class="drop-hint" id="chatHint">Elegí o arrastrá el archivo .txt</span>
+        </span>
+      </label>
+      <label class="drop" id="dropFotos">
+        <input type="file" id="fotos" webkitdirectory>
+        <span class="drop-icon" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+        </span>
+        <span class="drop-text">
+          <span class="drop-title">Carpeta de fotos <em class="opt">opcional</em></span>
+          <span class="drop-hint" id="fotosHint">Para verificar que no falte ninguna</span>
+        </span>
+      </label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="step-head">
+      <span class="step-num">2</span>
+      <div><h2>Perfil del operativo</h2><p>Se aplica a todas las filas del chat.</p></div>
+    </div>
+    <div class="grid">
+      <label class="field">
+        <span class="field-label">Operativo</span>
+        <select id="operativo">
+          <option>Venta ilegal</option><option>Evento masivo</option><option>Partido de fútbol</option>
+        </select>
+      </label>
+      <label class="field" id="lblSubnivel">
+        <span class="field-label">Subnivel</span>
+        <select id="subnivel">
+          <option>Polígono</option><option>Patrulla</option><option>Patrulla 4 AM</option>
+        </select>
+      </label>
+      <label class="field" id="lblZona">
+        <span class="field-label">Zona para todo el chat</span>
+        <select id="zona"></select>
+      </label>
+      <label class="field">
+        <span class="field-label">Ventana para unir fotos</span>
+        <span class="suffix"><input type="number" id="ventana" value="5" min="1"><span>min</span></span>
+      </label>
+    </div>
+    <div class="toggles">
+      <label class="toggle">
+        <input type="checkbox" id="reglas" checked><span class="switch"></span>
+        <span><b>Reglas de calles por zona</b><small>Corrige direcciones según Urbetrack y el manual</small></span>
+      </label>
+      <label class="toggle">
+        <input type="checkbox" id="altura" checked><span class="switch"></span>
+        <span><b>Altura en 00 → una más</b><small>3200 se carga como 3201 (manual)</small></span>
+      </label>
+    </div>
+  </section>
+</div>
+
+<section class="card" style="margin-top:20px">
+  <div class="step-head between">
+    <div class="grow">
+      <span class="step-num">3</span>
+      <div><h2>Revisión y descarga</h2><p>Corregí lo que haga falta en la tabla. Solo se descargan las filas marcadas como “lista”.</p></div>
+    </div>
+    <div class="actions">
+      <label class="check"><input type="checkbox" id="incluirRevisar"> Incluir también las “revisar” <small>(no recomendado)</small></label>
+      <button id="descargar" class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+        Descargar JSON
+      </button>
+    </div>
+  </div>
+
+  <div id="resumen" class="stats"></div>
+  <div id="avisos"></div>
+
+  <div class="empty" id="vacio">
+    <div class="empty-icon" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6"/><path d="M9 17h4"/></svg>
+    </div>
+    <b>Todavía no hay reportes</b>
+    Cargá el chat en el paso 1 y las filas aparecen acá.
+  </div>
+
+  <div class="table-wrap" id="tablaWrap" hidden>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Estado</th><th>Cargar</th><th>Fecha y hora</th><th>Dirección</th><th>Tipo</th>
+          <th>Subclasificación</th><th>Zona</th><th>Acta</th><th>Fotos</th><th>Notas / errores</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpo"></tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+<script src="../compartido/calles.js"></script>
+<script>
+(function (root) {
+'use strict';
+
+// ---------- Listas oficiales de SISEP (verificadas con capturas del formulario) ----------
+const POLIGONOS = ['Avellaneda', 'Once', 'Retiro', 'Caminito', 'San Telmo', 'Corrientes Cultural', 'Constitución',
+  'Liniers', 'Barrio Chino', 'Boulevard Cerviño', 'Parque Centenario', 'Parque Patricios', 'Parque Los Andes',
+  'Mataderos', 'Florida', 'Plaza Francia', 'Plaza Serrano', 'Parque 3 de Febrero', 'Parque Saavedra', 'Obelisco',
+  'Teatros', 'Parque Mujica', 'Plaza Arenales'];
+const EVENTO = ['Argentinos Juniors Estadio', 'Boca Juniors Estadio', 'River Plate Estadio', 'Campo Argentino de Polo',
+  'Ferro Estadio', 'Huracán Estadio', 'Luna Park', 'Movistar Arena', 'All Boys Estadio', 'Parque de la Ciudad',
+  'Riestra Estadio', 'San Lorenzo Estadio', 'Teatro de Flores', 'Vélez Sarsfield Estadio', 'Parque Roca', 'La Rural',
+  'Parque Sarmiento', 'Microcentro', 'Otros'];
+// Partido de fútbol: lista del código (no verificada con captura todavía).
+const PARTIDO = ['Argentinos Juniors Estadio', 'Boca Juniors Estadio', 'River Plate Estadio', 'Ferro Estadio',
+  'Huracán Estadio', 'All Boys Estadio', 'Riestra Estadio', 'San Lorenzo Estadio', 'Vélez Sarsfield Estadio', 'Otros'];
+const ZONAS_POR_OPERATIVO = { 'Venta ilegal': POLIGONOS, 'Evento masivo': EVENTO, 'Partido de fútbol': PARTIDO };
+const TIPOS = ['Secuestro', 'No secuestro', 'Acta de intimación'];
+const SUB_RELEVAMIENTO = ['MANTERO', 'PARRILLA', 'PUESTO SIN PERMISO', 'PUESTO CON PERMISO', 'VENDEDOR AMBULANTE',
+  'FOOD TRUCK', 'ARTESANO', 'SIN INCIDENCIAS', 'DERIVADO'];
+const SUB_EVENTO = ['Disuasión', 'Relevamiento sin incidencia'];
+const MAX_FOTOS = 30;
+
+// Palabras del texto → subclasificación de Relevamiento (la primera que coincide gana).
+const REGLAS_SUB = [
+  [/sin incidencias?/i, 'SIN INCIDENCIAS'], [/parrilla/i, 'PARRILLA'], [/mantero/i, 'MANTERO'],
+  [/vendedor(es)? ambulante|vendedor(es)?\b/i, 'VENDEDOR AMBULANTE'], [/food ?truck/i, 'FOOD TRUCK'],
+  [/artesan/i, 'ARTESANO'], [/puesto con permiso/i, 'PUESTO CON PERMISO'], [/puesto/i, 'PUESTO SIN PERMISO'],
+];
+
+// Estadio o lugar que aparece en el texto → zona de Evento/Partido.
+const ALIAS_ZONA = {
+  'Argentinos Juniors Estadio': ['argentinos'], 'Boca Juniors Estadio': ['boca'], 'River Plate Estadio': ['river'],
+  'Campo Argentino de Polo': ['campo argentino', 'polo'], 'Ferro Estadio': ['ferro'], 'Huracán Estadio': ['huracan'],
+  'Luna Park': ['luna park'], 'Movistar Arena': ['movistar'], 'All Boys Estadio': ['all boys'],
+  'Parque de la Ciudad': ['parque de la ciudad'], 'Riestra Estadio': ['riestra'], 'San Lorenzo Estadio': ['san lorenzo'],
+  'Teatro de Flores': ['teatro de flores'], 'Vélez Sarsfield Estadio': ['velez'], 'Parque Roca': ['parque roca'],
+  'La Rural': ['la rural'], 'Parque Sarmiento': ['parque sarmiento'], 'Microcentro': ['microcentro'],
+};
+
+// Reglas de corrección de calles (tomadas del prompt de Urbetrack y del manual).
+// zona: nombre exacto del desplegable de SISEP. re: patrón sobre la dirección. vacia: aplica si no hay dirección
+// (solo en relevamientos). activa:false = no se aplica hasta confirmar. por: texto nuevo o función(match) → texto|null.
+const REGLAS_CALLE = [
+  { zona: 'Once', re: /\bplaza\b/i, por: 'Rivadavia y Pueyrredón', nota: 'plaza → Rivadavia y Pueyrredón (Urbetrack)' },
+  { zona: 'San Telmo', vacia: true, por: 'Defensa 1080', nota: 'sin dirección → Defensa 1080 (San Telmo)' },
+  { zona: 'Parque 3 de Febrero', vacia: true, por: 'Infanta Isabel 400', nota: 'sin dirección → Infanta Isabel 400 (Urbetrack)' },
+  { zona: 'Mataderos', vacia: true, por: 'Bragado 6500', nota: 'sin dirección → Bragado 6500 (Urbetrack)' },
+  { zona: 'Avellaneda', vacia: true, por: 'Avellaneda y Nazca', nota: 'sin dirección → Avellaneda y Nazca (Urbetrack)' },
+  { zona: 'Plaza Francia', vacia: true, por: 'Junín 1750', nota: 'sin dirección → Junín 1750 (Urbetrack)' },
+];
+
+const HORA = '\\d{1,2}:\\d{2}(?::\\d{2})?(?:\\s?[ap]\\.?\\s?m\\.?)?';
+const RE_ANDROID = new RegExp('^(\\d{1,2}/\\d{1,2}/\\d{2,4}), (' + HORA + ') - (.*)$', 'i');
+const RE_IOS = new RegExp('^\\[(\\d{1,2}/\\d{1,2}/\\d{2,4}), (' + HORA + ')\\] (.*)$', 'i');
+const RE_INVIS = /[\u200e\u200f\u202a-\u202e\u2066-\u2069\ufeff]/g;
+const RE_ADJUNTO = /archivo adjunto|file attached|<adjunto:|<attached:/i;
+const RE_ARCHIVO = /([^\s<>():]+\.[A-Za-z0-9]{2,5})/;
+const RE_RUIDO = /^<?(multimedia omitido|media omitted|mensaje eliminado|this message was deleted)/i;
+const RE_EDITADO = /\s*<Se editó este mensaje\.?>/i;
+const RE_ACTA = /\bAS\s?:?\s?(\d{5,})\b/i;
+const RE_ACTA_SUELTA = /\bacta\s+(?:de\s+)?secuestro:?\s*(\d{5,})\b/i;
+const RE_SIN_INC = /sin incidencias?/i;
+const RE_EXPLICATIVO = /secuest|dep[oó]sito|descarg/i;
+const RE_DIR_NUM = /\d|^(av\.?|avenida|calle)\s/i;
+const RE_PARENTESIS = /^(.*?)\s*\(([^)]*)\)\s*(.*)$/;
+const RE_COMENTARIO_SIN = /(?:[.,;]\s*|\s+)sin\s+(?:incidencias?|novedades?|inconvenientes?|personas?|mercader[ií]as?|secuestros?|cambios?|movimientos?)\b.*$/i;
+const RE_COMENTARIO_FINAL = /(?:[.,;]\s*|\s+)(?:todo\s+(?:bien|ok|normal|tranquilo)|normal|tranquilo|ok|bien)\.?\s*$/i;
+const RE_CRUCE = /(?:[.,;]\s*|\s+)(?:esquina|esq)\b\.?.*$/i;
+const RE_CRUCE_SIN_ALTURA = /^([^\d,;()]{3,40}?)\s+(?:y|esquina|esq\.?)\s+([^\d,;()]{3,40}?)\.?$/i;
+const RE_NO_ES_CALLE = /\b(sin|secuest\w*|operativo|personal|todo|ok|polic[ií]a|gracias|buen)\b/i;
+const RE_COMENTARIO = /^\s*(sin|todo|ok|bien)\b/i;
+
+const norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/[^a-z0-9]+/g, ' ').trim();
+const sinAcentos = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const pad = (n) => String(n).padStart(2, '0');
+
+function fechaHora(fecha, hora, dmy) {
+  let [d, m, y] = fecha.split('/').map(Number);
+  if (!dmy) { const t = d; d = m; m = t; }
+  if (y < 100) y += 2000;
+  const h = hora.trim().toLowerCase().replace(/\./g, '').replace(/\s+/g, '');
+  const mt = h.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?(am|pm)?/);
+  let hh = Number(mt[1]);
+  if (mt[4] === 'pm' && hh < 12) hh += 12;
+  if (mt[4] === 'am' && hh === 12) hh = 0;
+  return new Date(y, m - 1, d, hh, Number(mt[2]), Number(mt[3] || 0));
+}
+
+function leerMensajes(texto, dmy) {
+  const mensajes = [];
+  let ultimo = null;
+  for (const crudo of texto.replace(/^\ufeff/, '').split(/\r?\n/)) {
+    const linea = crudo.replace(RE_INVIS, '').replace(/\s+$/, '');
+    const m = linea.match(RE_ANDROID) || linea.match(RE_IOS);
+    if (m) {
+      const dt = fechaHora(m[1], m[2], dmy);
+      const autor = m[3].match(/^([^:]+?): ([\s\S]*)$/);
+      if (autor) { ultimo = { dt, remitente: autor[1].trim(), texto: autor[2] }; mensajes.push(ultimo); }
+      else ultimo = null; // mensaje de sistema
+    } else if (ultimo) {
+      ultimo.texto += '\n' + linea;
+    }
+  }
+  return mensajes;
+}
+
+function separarAdjunto(texto) {
+  const lineas = texto.split('\n');
+  if (!RE_ADJUNTO.test(lineas[0])) return [null, texto.trim()];
+  const enlace = lineas[0].match(/<(?:adjunto|attached):\s*([^\s>]+)[^>]*>?/i);
+  const archivo = enlace ? enlace[1] : (lineas[0].match(RE_ARCHIVO) || [])[1];
+  if (!archivo) return [null, texto.trim()];
+  const enLinea = lineas[0].replace(enlace ? enlace[0] : archivo, ' ').replace(/archivo adjunto|file attached/gi, ' ')
+    .replace(/[<>()]/g, ' ').replace(/\s+/g, ' ').trim();
+  return [archivo, [enLinea, ...lineas.slice(1)].filter(Boolean).join('\n').trim()];
+}
+
+const limpiarComentario = (s) => s.replace(RE_COMENTARIO_SIN, '').replace(RE_COMENTARIO_FINAL, '')
+  .replace(RE_CRUCE, '').replace(/[.,;]+$/, '').trim();
+
+function interseccion(linea) {
+  const m = linea.trim().match(RE_CRUCE_SIN_ALTURA);
+  if (!m) return '';
+  const palabras = (s) => s.trim().split(/\s+/).length;
+  if (palabras(m[1]) > 4 || palabras(m[2]) > 4) return '';
+  if (RE_NO_ES_CALLE.test(linea)) return '';
+  return `${m[1].trim()} y ${m[2].trim()}`;
+}
+
+// Dirección dentro de una línea con guiones, "Dirección:" o "Av/Calle".
+function direccionDeTexto(linea) {
+  let candidato = '';
+  const dir = linea.match(/direcci[oó]n:\s*(.+)$/i);
+  if (dir) candidato = dir[1];
+  else candidato = linea.split(/\s+[-–]\s+/).slice(1).find((p) => RE_DIR_NUM.test(p)) || '';
+  if (!candidato) {
+    const re = /\b(av\.?|avenida|calle)\s/gi;
+    let ultimo = -1;
+    for (let m = re.exec(linea); m; m = re.exec(linea)) ultimo = m.index;
+    if (ultimo >= 0) candidato = linea.slice(ultimo);
+  }
+  if (!candidato) {
+    const tramo = linea.split(/\s+[-–]\s+/).find((p) => /\d/.test(p)) || '';
+    candidato = tramo.split(/\s+en\s+/i).pop().split(/\.\s+/).pop().trim();
+  }
+  candidato = candidato.split(/\s*[-–]\s*/)[0].replace(/[.;]+$/, '').trim();
+  if (!/\d/.test(candidato)) return '';
+  return candidato.replace(/\s+al\s+(\d+)/i, ' $1').replace(/^(av|avda|avenida)(\.|\s)\s*/i, 'Av. ');
+}
+
+function clasificar(texto, conFotos) {
+  const d = { tipo: '', clasif: '', direccion: '', observacion: '', acta: '', articulos: '', bultos: '' };
+  const limpio = texto.replace(RE_EDITADO, '').trim();
+  const lineas = limpio.split('\n').map((s) => s.replace(/\*/g, '').trim()).filter(Boolean);
+  const esActa = (l) => RE_ACTA.test(l) || RE_ACTA_SUELTA.test(l);
+
+  if (lineas.length) {
+    const primera = lineas[0];
+    let resto = null;
+    if (/^secuestro\b/i.test(primera)) { d.tipo = 'Secuestro'; resto = primera.replace(/^secuestro\b/i, '').trim(); }
+    else if (/^relevamiento\b/i.test(primera)) {
+      d.tipo = 'No secuestro'; d.clasif = 'Relevamiento';
+      resto = primera.replace(/^relevamiento\b/i, '').trim();
+    }
+    if (resto !== null) {
+      if (resto) d.direccion = resto;
+      else {
+        // Dirección en la línea siguiente: la primera con letras y números que no sea acta ni comentario.
+        const conNumero = lineas.slice(1).find((l) => /[a-záéíóúñ]/i.test(l) && /\d/.test(l) && !esActa(l)
+          && !RE_COMENTARIO.test(l) && !RE_SIN_INC.test(l));
+        if (conNumero) d.direccion = conNumero;
+        else {
+          // Lugar sin altura seguido de comentario ("Centro de trasbordo" + "Sin incidencias"): el lugar es la dirección.
+          const sinNumero = lineas.slice(1).find((l, i) => /[a-záéíóúñ]/i.test(l) && !esActa(l) && !RE_COMENTARIO.test(l)
+            && !RE_SIN_INC.test(l) && !/^\d+$/.test(l) && (lineas[i + 2] === undefined || RE_COMENTARIO.test(lineas[i + 2])
+              || RE_SIN_INC.test(lineas[i + 2] || '')));
+          if (sinNumero) d.direccion = sinNumero;
+        }
+      }
+    }
+  }
+  if (!d.tipo && (lineas.some((l) => /^secuestro$/i.test(l)) || RE_ACTA.test(limpio) || RE_ACTA_SUELTA.test(limpio))) {
+    d.tipo = 'Secuestro';
+  }
+  if (!d.tipo && conFotos && RE_SIN_INC.test(limpio)) { d.tipo = 'No secuestro'; d.clasif = 'Relevamiento'; }
+  if (!d.direccion) {
+    for (const linea of lineas) {
+      if (esActa(linea)) continue;
+      const x = direccionDeTexto(linea);
+      if (x) { d.direccion = x; break; }
+    }
+  }
+  if (!d.direccion) {
+    for (const linea of lineas) {
+      if (esActa(linea)) continue;
+      if (linea.length <= 80 && RE_DIR_NUM.test(linea) && !RE_EXPLICATIVO.test(linea)) { d.direccion = linea; break; }
+    }
+  }
+  if (!d.direccion) {
+    for (const linea of lineas) { const x = interseccion(linea); if (x) { d.direccion = x; break; } }
+  }
+  d.direccion = limpiarComentario(d.direccion);
+  const p = d.direccion.match(RE_PARENTESIS);
+  if (p) { d.direccion = p[1].trim(); d.observacion = [p[2].trim(), p[3].trim()].filter(Boolean).join(' '); }
+  const a = limpio.match(RE_ACTA) || limpio.match(RE_ACTA_SUELTA);
+  if (a) d.acta = 'AS' + a[1];
+  const ar = limpio.match(/Art[ií]culos?:\s*(\d+)/i); if (ar) d.articulos = ar[1];
+  const b = limpio.match(/Bultos?:\s*(\d+)/i); if (b) d.bultos = b[1];
+  return d;
+}
+
+// Agrupa mensajes en reportes. Una foto sin texto se une al reporte abierto del mismo remitente (dentro de la ventana).
+// Un texto que llega después de fotos sueltas se une a esas fotos. Una vez unido, el reporte queda cerrado.
+function agrupar(mensajes, ventanaMin) {
+  const reportes = [];
+  const abiertos = new Map(); // remitente -> { rep, dt, cerrado }
+  const ventana = ventanaMin * 60 * 1000;
+  const nuevo = (dt, remitente, texto) => {
+    const rep = { id: 0, dt, remitente, texto, fotos: [], videos: [] };
+    reportes.push(rep);
+    return rep;
+  };
+  for (const msg of mensajes) {
+    const [archivo, pie] = separarAdjunto(msg.texto);
+    const rem = msg.remitente;
+    const dt = msg.dt;
+    const ab = abiertos.get(rem);
+    const enVentana = !!ab && dt - ab.dt <= ventana;
+
+    if (archivo === null) {
+      if (RE_RUIDO.test(pie)) continue;
+      const texto = pie.replace(RE_EDITADO, '').trim();
+      if ((RE_ACTA.test(texto) || RE_ACTA_SUELTA.test(texto)) && enVentana) { ab.rep.texto += '\n' + texto; continue; }
+      if (enVentana && !ab.cerrado && ab.rep.texto === '' && ab.rep.fotos.length > 0) {
+        ab.rep.texto = texto; ab.cerrado = true; continue;
+      }
+      abiertos.set(rem, { rep: nuevo(dt, rem, texto), dt, cerrado: false });
+      continue;
+    }
+
+    let rep;
+    if (!pie && enVentana && !ab.cerrado) {
+      rep = ab.rep;
+    } else {
+      rep = nuevo(dt, rem, pie.replace(RE_EDITADO, '').trim());
+    }
+    abiertos.set(rem, { rep, dt, cerrado: false });
+    const ext = archivo.slice(archivo.lastIndexOf('.')).toLowerCase();
+    if (['.jpg', '.jpeg', '.png', '.webp', '.heic', '.gif'].includes(ext)) rep.fotos.push(archivo);
+    else rep.videos.push(archivo);
+  }
+  return expandirActas(reportes);
+}
+
+function actas(texto) {
+  const encontradas = [];
+  for (const m of texto.matchAll(new RegExp(RE_ACTA.source, 'gi'))) encontradas.push([m.index, 'AS' + m[1]]);
+  for (const m of texto.matchAll(new RegExp(RE_ACTA_SUELTA.source, 'gi'))) encontradas.push([m.index, 'AS' + m[1]]);
+  return [...new Set(encontradas.sort((x, y) => x[0] - y[0]).map((x) => x[1]))];
+}
+
+// Un reporte con varias actas se separa: una fila por acta, con las mismas fotos.
+function expandirActas(reportes) {
+  const salida = [];
+  for (const rep of reportes) {
+    const lista = actas(rep.texto);
+    if (lista.length < 2) { salida.push(rep); continue; }
+    for (const acta of lista) salida.push(Object.assign({}, rep, { acta }));
+  }
+  return salida;
+}
+
+// Turno según la hora. Lun-jue: mañana 07-13, tarde 13-19, noche 19-07. Vie-dom: SADOFE diurno 07-19, nocturno 19-07.
+function turnoPorHora(dt, subnivel) {
+  if (subnivel === 'Patrulla 4 AM') return 'Patrulla 4 AM';
+  const h = dt.getHours() + dt.getMinutes() / 60;
+  const dia = dt.getDay();
+  const inicio = h < 7 ? (dia + 6) % 7 : dia;
+  const finde = (d) => d === 5 || d === 6 || d === 0;
+  if (h >= 19 || h < 7) return finde(inicio) ? 'Turno nocturno SADOFE' : 'Turno noche';
+  if (finde(dia)) return 'Turno diurno SADOFE';
+  return h < 13 ? 'Turno mañana' : 'Turno tarde';
+}
+
+function subRelevamiento(texto) {
+  for (const [re, sub] of REGLAS_SUB) if (re.test(texto)) return sub;
+  return '';
+}
+
+function zonaDeTexto(texto, operativo) {
+  const t = sinAcentos(texto);
+  for (const z of ZONAS_POR_OPERATIVO[operativo] || []) {
+    if (z === 'Otros') continue;
+    const claves = ALIAS_ZONA[z] || [sinAcentos(z.replace(/ Estadio$/, ''))];
+    if (claves.some((c) => t.includes(c))) return z;
+  }
+  return '';
+}
+
+// Altura: "al 4200" → 4200. Si la altura termina en 00 se carga una más (3200 → 3201): en el callejero hay numeraciones que no existen.
+function alturaSISEP(direccion) {
+  const m = direccion.match(/^(.*?)\s+(?:al\s+)?(\d+)\s*$/i);
+  if (!m) return { dir: direccion, cambio: false };
+  let altura = Number(m[2]);
+  if (altura % 100 === 0 && altura > 0) altura += 1;
+  const dir = `${m[1]} ${altura}`;
+  return { dir, cambio: dir !== direccion };
+}
+
+function aplicarReglasCalle(zona, dir, tipo) {
+  // Correcciones compartidas con Urbetrack (compartido/calles.js).
+  for (const c of ((root.CALLES_COMPARTIDAS || {}).correcciones || [])) {
+    if (c.zona !== '*' && c.zona !== zona) continue;
+    if (dir && c.re.test(dir)) {
+      const conAv = c.zonasConAv && c.zonasConAv.test(zona);
+      const nuevo = c.fn ? c.fn(dir.match(c.re)) : (conAv && c.toAv ? c.toAv : c.to);
+      if (nuevo && nuevo !== dir) return { dir: nuevo, nota: c.nota };
+    }
+  }
+  for (const r of REGLAS_CALLE) {
+    if (r.zona !== zona || r.activa === false) continue;
+    if (r.vacia) {
+      if (dir || tipo !== 'No secuestro') continue;
+      return { dir: r.por, nota: r.nota };
+    }
+    const m = dir && dir.match(r.re);
+    if (!m) continue;
+    const nuevaDir = typeof r.por === 'function' ? r.por(m) : r.por;
+    if (!nuevaDir) continue;
+    return { dir: nuevaDir, nota: r.nota };
+  }
+  return null;
+}
+
+// Arma la fila a partir de un reporte. cfg: { operativo, subnivel, zona, reglas, alturaAjuste }
+function prepararFila(rep, cfg) {
+  const tieneFotos = rep.fotos.length > 0;
+  const d = clasificar(rep.texto, tieneFotos);
+  if (rep.acta) d.acta = rep.acta;
+  const notas = [];
+  let observacion = d.observacion;
+  if (!rep.texto && tieneFotos) observacion = 'Explicativa (foto sin texto)';
+  if (!d.tipo && tieneFotos && d.direccion) { d.tipo = 'No secuestro'; d.clasif = 'Relevamiento'; }
+  const soloDireccion = tieneFotos && !!d.direccion && norm(rep.texto) === norm(d.direccion);
+  if (soloDireccion && (!d.tipo || d.tipo === 'No secuestro')) { d.tipo = 'No secuestro'; d.clasif = 'Relevamiento'; }
+
+  const op = cfg.operativo;
+  const esEvento = op === 'Evento masivo' || op === 'Partido de fútbol';
+  const subnivel = esEvento ? '' : (cfg.subnivel || '');
+  let zona = '';
+  if (esEvento) zona = cfg.zona || zonaDeTexto(rep.texto, op);
+  else if (subnivel === 'Polígono') zona = cfg.zona || '';
+  if (esEvento) d.clasif = d.tipo === 'No secuestro' ? 'Evento' : '';
+
+  let dir = d.direccion;
+  if (cfg.reglas && zona) {
+    const r = aplicarReglasCalle(zona, dir, d.tipo);
+    if (r) { notas.push(`regla de calle: "${dir || '(vacío)'}" → "${r.dir}" (${r.nota})`); dir = r.dir; }
+  }
+  const dirOriginal = dir;
+  let direccion = dir;
+  if (cfg.alturaAjuste && dir) {
+    const a = alturaSISEP(dir);
+    if (a.cambio) { direccion = a.dir; notas.push(`altura 00: "${dir}" → "${a.dir}" (si no existe, usar la original)`); }
+  }
+
+  const incluir = !!direccion && tieneFotos;
+  if (!tieneFotos && (direccion || d.tipo)) observacion = observacion || 'Sin foto (obligatoria): no se carga';
+  const subclasif = soloDireccion && d.tipo === 'No secuestro'
+    ? (esEvento ? 'Relevamiento sin incidencia' : 'SIN INCIDENCIAS')
+    : d.clasif === 'Evento' ? (/disuas/i.test(rep.texto) ? 'Disuasión' : /sin incidencias?/i.test(rep.texto) ? 'Relevamiento sin incidencia' : '')
+    : d.clasif === 'Relevamiento' ? subRelevamiento(rep.texto) : '';
+
+  return {
+    id: 0, incluir, fecha: rep.dt, direccion, dirOriginal, observacion, operativo: op, subnivel,
+    turno: turnoPorHora(rep.dt, subnivel), zona, tipo: d.tipo, clasif: d.clasif, subclasif,
+    acta: d.acta, articulos: d.articulos, bultos: d.bultos, fotos: rep.fotos, videos: rep.videos,
+    remitente: rep.remitente, texto: rep.texto, notas, errores: [], estado: '',
+  };
+}
+
+// Errores que impiden cargar la fila. nombresFotos: Set de nombres en minúsculas (opcional).
+function validar(f, nombresFotos) {
+  const e = [];
+  const lista = ZONAS_POR_OPERATIVO[f.operativo];
+  if (!lista) e.push('Operativo inválido');
+  if (f.operativo === 'Venta ilegal' && f.subnivel === 'Polígono' && !POLIGONOS.includes(f.zona)) {
+    e.push(f.zona ? `Zona inválida: "${f.zona}"` : 'Falta la zona (Polígono)');
+  }
+  if (lista && f.operativo !== 'Venta ilegal') {
+    if (!f.zona) e.push('Falta el lugar del evento');
+    else if (f.zona === 'Otros') e.push('"Otros" necesita texto libre: cargar a mano');
+    else if (!lista.includes(f.zona)) e.push(`Lugar inválido: "${f.zona}"`);
+  }
+  if (!TIPOS.includes(f.tipo)) e.push('Tipo de procedimiento inválido');
+  if (f.tipo === 'Secuestro') {
+    if (!f.acta) e.push('Falta el acta de secuestro');
+    else if (!/^AS\d+$/.test(f.acta)) e.push(`Acta con formato inválido: "${f.acta}"`);
+  }
+  if (f.tipo === 'No secuestro') {
+    if (!f.clasif) e.push('Falta la clasificación');
+    if (f.clasif === 'Relevamiento' && !SUB_RELEVAMIENTO.includes(f.subclasif)) e.push('Falta la subclasificación');
+    if (f.clasif === 'Evento' && !SUB_EVENTO.includes(f.subclasif)) e.push('Falta la subclasificación del evento');
+  }
+  if (!f.direccion) e.push('Falta la dirección');
+  else if (!/\d/.test(f.direccion) && !/ y /i.test(f.direccion)) e.push('Dirección sin altura: revisar');
+  if (f.fotos.length > MAX_FOTOS) e.push(`Más de ${MAX_FOTOS} fotos (${f.fotos.length})`);
+  if (nombresFotos) {
+    const faltan = f.fotos.filter((n) => !nombresFotos.has(n.toLowerCase()));
+    if (faltan.length) e.push(`Fotos no encontradas en la carpeta: ${faltan.join(', ')}`);
+  }
+  return e;
+}
+
+function estadoDe(f) {
+  if (!f.incluir) return 'no se carga';
+  return f.errores.length ? 'revisar' : 'lista';
+}
+
+// Revisa la fila en su conjunto (errores y estado). Se usa al convertir y al editar en la interfaz.
+function completar(f, nombresFotos) {
+  f.errores = validar(f, nombresFotos);
+  f.estado = estadoDe(f);
+  return f;
+}
+
+// cfg: { operativo, subnivel, zona, ventanaMin, dmy, reglas, alturaAjuste }
+// nombresFotos: Set en minúsculas (opcional)
+function convertir(texto, cfg, nombresFotos) {
+  const c = Object.assign({ operativo: 'Venta ilegal', subnivel: 'Polígono', zona: '', ventanaMin: 5, dmy: true,
+    reglas: true, alturaAjuste: true }, cfg || {});
+  const reportes = agrupar(leerMensajes(texto, c.dmy), c.ventanaMin);
+  const filas = reportes.map((rep, i) => {
+    const f = prepararFila(rep, c);
+    f.id = i + 1;
+    return f;
+  });
+  const vistas = new Set();
+  for (const f of filas) {
+    completar(f, nombresFotos);
+    if (f.tipo === 'Secuestro' && f.acta && f.incluir) {
+      if (vistas.has(f.acta)) { f.incluir = false; f.errores.push('Acta repetida en el chat'); }
+      else vistas.add(f.acta);
+    }
+    f.estado = estadoDe(f);
+  }
+  const resumen = {
+    total: filas.length,
+    lista: filas.filter((f) => f.estado === 'lista').length,
+    revisar: filas.filter((f) => f.estado === 'revisar').length,
+    noSeCarga: filas.filter((f) => f.estado === 'no se carga').length,
+    alturasAjustadas: filas.filter((f) => f.notas.some((n) => n.startsWith('altura 00'))).length,
+  };
+  return { filas, resumen };
+}
+
+const pad2 = pad;
+function fechaLocalISO(dt) {
+  return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}T${pad2(dt.getHours())}:${pad2(dt.getMinutes())}:00`;
+}
+
+// JSON que lee el script de Tampermonkey (schema vna-filas-v2). Solo filas incluir=true.
+function filasAJson(filas, chat) {
+  return {
+    schema: 'vna-filas-v2',
+    generado: new Date().toISOString(),
+    chat: chat || '',
+    filas: filas.map((f) => ({
+      id: f.id, incluir: !!f.incluir, fecha: fechaLocalISO(f.fecha), direccion: f.direccion,
+      observacion: f.observacion, operativo: f.operativo, subnivel: f.subnivel, turno: f.turno || '',
+      zona: f.zona, tipo: f.tipo, clasif: f.clasif, subclasif: f.subclasif || '', acta: f.acta,
+      articulos: f.articulos, bultos: f.bultos, fotos: f.fotos, videos: f.videos,
+      remitente: f.remitente, texto: f.texto,
+    })),
+  };
+}
+
+const API = { POLIGONOS, EVENTO, PARTIDO, ZONAS_POR_OPERATIVO, TIPOS, SUB_RELEVAMIENTO, SUB_EVENTO, REGLAS_CALLE,
+  convertir, validar, completar, filasAJson, alturaSISEP, aplicarReglasCalle };
+if (typeof module !== 'undefined' && module.exports) module.exports = API;
+else root.VNA = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  const VNA = window.VNA;
+  let filas = [];
+  let chatTexto = '';
+  let chatNombre = '';
+  let nombresFotos = null;
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const hora = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ` +
+    `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+
+  function cfg() {
+    return {
+      operativo: $('operativo').value,
+      subnivel: $('operativo').value === 'Venta ilegal' ? $('subnivel').value : '',
+      zona: $('zona').value,
+      ventanaMin: Number($('ventana').value) || 5,
+      reglas: $('reglas').checked,
+      alturaAjuste: $('altura').checked,
+    };
+  }
+
+  function llenarZonas() {
+    const op = $('operativo').value;
+    const esVenta = op === 'Venta ilegal';
+    $('lblSubnivel').style.display = esVenta ? '' : 'none';
+    const sub = $('subnivel').value;
+    const usaZona = !esVenta || sub === 'Polígono';
+    $('lblZona').style.display = usaZona ? '' : 'none';
+    const lista = VNA.ZONAS_POR_OPERATIVO[op] || [];
+    const actual = $('zona').value;
+    $('zona').innerHTML = '<option value="">— elegir —</option>' + lista.map((z) => `<option>${esc(z)}</option>`).join('');
+    if (lista.includes(actual)) $('zona').value = actual;
+  }
+
+  function convertir() {
+    if (!chatTexto) return;
+    const r = VNA.convertir(chatTexto, cfg(), nombresFotos);
+    filas = r.filas;
+    const s = r.resumen;
+    const stat = (cls, n, l) => `<div class="stat ${cls}"><span class="stat-n">${n}</span><span class="stat-l">${l}</span></div>`;
+    $('resumen').innerHTML = stat('s-total', s.total, 'Reportes') + stat('s-lista', s.lista, 'Listas') +
+      stat('s-revisar', s.revisar, 'Para revisar') + stat('s-nocarga', s.noSeCarga, 'No se cargan') +
+      stat('s-altura', s.alturasAjustadas, 'Alturas 00 ajustadas');
+    $('avisos').innerHTML = '';
+    if (s.alturasAjustadas) {
+      $('avisos').innerHTML = '<div class="aviso"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Hay alturas que terminan en 00 y se ajustaron (una más). Si SISEP no encuentra la calle, usá el botón <b>usar original</b> de esa fila.</span></div>';
+    }
+    renderTabla();
+  }
+
+  function renderTabla() {
+    $('cuerpo').innerHTML = filas.map((f, i) => {
+      const subs = f.tipo === 'No secuestro'
+        ? (f.clasif === 'Evento' ? VNA.SUB_EVENTO : VNA.SUB_RELEVAMIENTO) : [];
+      const zonas = VNA.ZONAS_POR_OPERATIVO[f.operativo] || [];
+      const cambio = f.dirOriginal !== f.direccion;
+      // Patrullas (y otros subniveles sin zona): no llevan zona. Se muestra "—" y no se elige ninguna.
+      const sinZona = f.operativo === 'Venta ilegal' && f.subnivel !== 'Polígono';
+      const errores = f.errores.map((e) => `<div class="err">${esc(e)}</div>`).join('');
+      const notas = f.notas.map((n) => `<div class="nota">${esc(n)}</div>`).join('');
+      const cls = f.estado === 'lista' ? 'lista' : f.estado === 'revisar' ? 'revisar' : 'nocarga';
+      return `<tr class="r-${cls}">
+        <td class="num">${f.id}</td>
+        <td><span class="pill ${cls}">${esc(f.estado)}</span></td>
+        <td><input type="checkbox" data-i="${i}" data-k="incluir" ${f.incluir ? 'checked' : ''} aria-label="Cargar fila ${f.id}"></td>
+        <td class="fecha">${hora(f.fecha)}</td>
+        <td class="c-dir"><input type="text" data-i="${i}" data-k="direccion" value="${esc(f.direccion)}">
+          ${cambio ? `<button class="btn btn-ghost" data-i="${i}" data-k="original">usar original: ${esc(f.dirOriginal)}</button>` : ''}</td>
+        <td class="c-sel"><select data-i="${i}" data-k="tipo">${['', ...VNA.TIPOS].map((t) => `<option ${t === f.tipo ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></td>
+        <td class="c-sel"><select data-i="${i}" data-k="subclasif"><option></option>${subs.map((t) => `<option ${t === f.subclasif ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></td>
+        <td class="c-sel"><select data-i="${i}" data-k="zona">${sinZona ? '<option value="" selected>—</option>' : '<option value=""></option>' + zonas.map((z) => `<option ${z === f.zona ? 'selected' : ''}>${esc(z)}</option>`).join('')}</select></td>
+        <td class="c-acta"><input type="text" data-i="${i}" data-k="acta" value="${esc(f.acta)}"></td>
+        <td><span class="fotos${f.fotos.length ? '' : ' cero'}">${f.fotos.length}</span></td>
+        <td class="c-notas">${errores}${notas}</td>
+      </tr>`;
+    }).join('');
+    $('tablaWrap').hidden = !filas.length;
+    $('vacio').hidden = !!filas.length;
+  }
+
+  function recalcular(i) {
+    VNA.completar(filas[i], nombresFotos);
+    if (filas[i].tipo === 'Secuestro' && filas[i].acta) {
+      const repetida = filas.some((o, j) => j < i && o.tipo === 'Secuestro' && o.acta === filas[i].acta && o.incluir);
+      if (repetida) filas[i].errores.push('Acta repetida en el chat');
+    }
+    filas[i].estado = filas[i].incluir ? (filas[i].errores.length ? 'revisar' : 'lista') : 'no se carga';
+  }
+
+  $('cuerpo').addEventListener('change', (ev) => {
+    const el = ev.target;
+    const i = Number(el.dataset.i);
+    const k = el.dataset.k;
+    if (Number.isNaN(i) || !k) return;
+    if (k === 'incluir') filas[i].incluir = el.checked;
+    else if (k === 'direccion' || k === 'acta' || k === 'tipo' || k === 'subclasif' || k === 'zona') filas[i][k] = el.value.trim();
+    if (k === 'tipo' && el.value !== 'No secuestro') filas[i].subclasif = '';
+    recalcular(i);
+    renderTabla();
+  });
+  $('cuerpo').addEventListener('click', (ev) => {
+    const el = ev.target;
+    if (el.dataset && el.dataset.k === 'original') {
+      const i = Number(el.dataset.i);
+      filas[i].direccion = filas[i].dirOriginal;
+      recalcular(i);
+      renderTabla();
+    }
+  });
+
+  $('chat').addEventListener('change', async (ev) => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    $('chatHint').textContent = f.name;
+    $('dropChat').classList.add('has-file');
+    chatNombre = f.name.replace(/\.txt$/i, '');
+    chatTexto = await f.text();
+    convertir();
+  });
+  $('fotos').addEventListener('change', (ev) => {
+    nombresFotos = new Set(Array.from(ev.target.files).map((f) => f.name.toLowerCase()));
+    const n = ev.target.files.length;
+    $('fotosHint').textContent = n ? `${n} archivo${n === 1 ? '' : 's'} en la carpeta` : 'Para verificar que no falte ninguna';
+    $('dropFotos').classList.toggle('has-file', n > 0);
+    convertir();
+  });
+  $('operativo').addEventListener('change', () => { llenarZonas(); convertir(); });
+  $('subnivel').addEventListener('change', () => { llenarZonas(); convertir(); });
+  ['zona', 'ventana', 'reglas', 'altura'].forEach((id) => $(id).addEventListener('change', convertir));
+
+  $('descargar').addEventListener('click', () => {
+    const incluirRevisar = $('incluirRevisar').checked;
+    const elegidas = filas.filter((f) => f.incluir && (f.estado === 'lista' || (incluirRevisar && f.estado === 'revisar')));
+    if (!elegidas.length) { alert('No hay filas para descargar.'); return; }
+    const json = VNA.filasAJson(elegidas, chatNombre);
+    const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `vna_filas_${chatNombre || 'chat'}.json`;
+    a.click();
+  });
+
+  llenarZonas();
+})();
+</script>
+</body>
+</html>

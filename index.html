@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herramientas de carga · GCBA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f3fb;
+    --surface: #ffffff;
+    --line: #ebe5f4;
+    --ink: #27223a;
+    --ink-2: #4a4462;
+    --muted: #7a7393;
+    --lilac: #8b72de;
+    --lilac-soft: #f1ecfe;
+    --mint: #2f7d6d;
+    --mint-soft: #e8f6f0;
+    --shadow: 0 1px 2px rgba(39, 34, 58, .04), 0 12px 32px -16px rgba(59, 42, 128, .18);
+    --f-ui: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --f-display: 'Fraunces', Georgia, serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; font: 15px/1.55 var(--f-ui); color: var(--ink); background: var(--bg);
+    background-image:
+      radial-gradient(900px 500px at 0% -10%, #ebe3fd 0%, transparent 60%),
+      radial-gradient(700px 420px at 100% 0%, #d9f1e7 0%, transparent 55%);
+    background-attachment: fixed;
+    padding: 40px 16px 56px;
+  }
+  main { width: 100%; max-width: 880px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 36px; }
+  .eyebrow { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--lilac); }
+  h1 { margin: 0 0 8px; font: 600 34px/1.15 var(--f-display); font-variation-settings: 'SOFT' 100; }
+  .lede { margin: 0; color: var(--ink-2); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .card {
+    display: flex; flex-direction: column; gap: 14px; padding: 26px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); text-decoration: none; color: inherit;
+    transition: transform .15s, box-shadow .15s, border-color .15s;
+  }
+  .card:hover { transform: translateY(-2px); border-color: #d4c8f5; }
+  .card:focus-visible { outline: none; box-shadow: 0 0 0 4px rgba(139, 114, 222, .25); }
+  .icon { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; }
+  .card.urbe .icon { background: var(--mint-soft); color: var(--mint); }
+  .card.sisep .icon { background: var(--lilac-soft); color: #3b2a80; }
+  h2 { margin: 0; font: 600 21px/1.25 var(--f-display); font-variation-settings: 'SOFT' 100; }
+  .card p { margin: 0; color: var(--ink-2); font-size: 14px; }
+  .go { margin-top: auto; font-weight: 600; font-size: 14px; }
+  .card.urbe .go { color: var(--mint); }
+  .card.sisep .go { color: var(--lilac); }
+
+  /* ---------- Galería ---------- */
+  .gallery { margin: 36px auto 0; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow); overflow: hidden; }
+  .frame { position: relative; aspect-ratio: 4 / 3; background: var(--lilac-soft); }
+  .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .8s ease, transform 1.2s ease; }
+  .frame img.on { opacity: 1; }
+  .frame:hover img.on { transform: scale(1.06); }
+  .frame { cursor: pointer; }
+  .gal-foot { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 12px 18px; font-size: 12.5px; color: var(--muted); }
+  .gal-foot a { color: var(--lilac); font-weight: 600; text-decoration: none; }
+  .gal-foot a:hover { text-decoration: underline; }
+  .gal-empty { padding: 28px; text-align: center; color: var(--muted); font-size: 13px; }
+  .gal-hidden { display: none; }
+
+  .note { margin-top: 24px; text-align: center; color: var(--muted); font-size: 12.5px; }
+
+  @media (max-width: 560px) { h1 { font-size: 28px; } .card { padding: 22px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Herramientas GCBA</p>
+    <h1>¿Qué necesitás hacer?</h1>
+    <p class="lede">Las dos trabajan con el mismo chat de WhatsApp y comparten las reglas de calles.</p>
+  </header>
+
+  <div class="grid">
+    <a class="card urbe" href="urbetrack/corrector-chat-urbetrack.html">
+      <span class="icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="m8.5 10 2 2 4-4"/></svg>
+      </span>
+      <h2>Corrector para Urbetrack</h2>
+      <p>Corrige el chat y arma el Excel para Urbetrack: calles, actas, infractores y eventos. Marca lo que hay que revisar a mano.</p>
+      <span class="go">Abrir corrector →</span>
+    </a>
+
+    <a class="card sisep" href="sisep/conversor_vna_sisep.html">
+      <span class="icon" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11"/><path d="m12 4 3 3-3 3"/><path d="M20 17H9"/><path d="m12 14-3 3 3 3"/></svg>
+      </span>
+      <h2>Conversor para SISEP</h2>
+      <p>Convierte el chat en el JSON que lee el script de carga de SISEP. Elegís operativo, zona y revisás cada fila antes de descargar.</p>
+      <span class="go">Abrir conversor →</span>
+    </a>
+  </div>
+
+  <section class="gallery" id="galeria" aria-label="Galería de BTS">
+    <div class="frame" id="frame"></div>
+    <div class="gal-foot" id="pie" hidden>
+      <span id="credito"></span>
+      <a id="fuente" target="_blank" rel="noopener">Ver original</a>
+    </div>
+    <div class="gal-empty" id="vacio">Cargando imágenes…</div>
+  </section>
+
+  <p class="note">Todo se procesa en tu navegador. Las dos herramientas usan <code>compartido/calles.js</code>, así que una corrección de calle vale para las dos.</p>
+</main>
+
+<script>
+(function () {
+  // Fotos de BTS desde Wikimedia Commons (API pública, sin clave). Solo JPEG; cada una muestra su licencia y su página original.
+  // Openverse: buscador de imágenes con licencia abierta (sin clave; máximo 20 por página para uso anónimo).
+  // "Bangtan" (nombre oficial del grupo) trae fotos del grupo; "BTS band" traía mucho ruido.
+  const API = 'https://api.openverse.org/v1/images/?q=' + encodeURIComponent('Bangtan') + '&page_size=20&page=';
+  const PAGINAS = 6;
+  const CADA_MS = 7000;
+
+  const frame = document.getElementById('frame');
+  const vacio = document.getElementById('vacio');
+  const pie = document.getElementById('pie');
+  const credito = document.getElementById('credito');
+  const fuente = document.getElementById('fuente');
+
+  const textoLimpio = (html) => {
+    const d = new DOMParser().parseFromString(String(html || ''), 'text/html');
+    return (d.body.textContent || '').replace(/\s+/g, ' ').trim();
+  };
+
+  function mostrar(fotos) {
+    frame.innerHTML = '';
+    fotos.forEach((f, i) => {
+      const img = new Image();
+      img.alt = f.titulo;
+      img.src = f.url;
+      if (i === 0) img.classList.add('on');
+      frame.appendChild(img);
+    });
+    vacio.hidden = true;
+    frame.hidden = false;
+    pie.hidden = false;
+    let actual = 0;
+    const pintar = (i) => {
+      const imgs = frame.querySelectorAll('img');
+      imgs.forEach((im, k) => im.classList.toggle('on', k === i));
+      const f = fotos[i];
+      credito.textContent = (f.autor ? f.autor + ' · ' : '') + (f.licencia || 'Wikimedia Commons');
+      fuente.href = f.pagina;
+    };
+    pintar(0);
+    // Con el mouse encima la foto se queda quieta; al salir vuelve a cambiar.
+    let pausa = false;
+    frame.addEventListener('mouseenter', () => { pausa = true; });
+    frame.addEventListener('mouseleave', () => { pausa = false; });
+    if (fotos.length > 1) setInterval(() => {
+      if (pausa) return;
+      actual = (actual + 1) % fotos.length;
+      pintar(actual);
+    }, CADA_MS);
+  }
+
+  const pedir = (n) => fetch(API + n).then((r) => r.json()).catch(() => ({ results: [] }));
+  Promise.all(Array.from({ length: PAGINAS }, (_, i) => pedir(i + 1)))
+    .then((paginas) => {
+      const vistos = new Set();
+      const fotos = [];
+      paginas.forEach((p) => (p.results || []).forEach((r) => {
+        if (!r.url || !/^https:/.test(r.url) || vistos.has(r.url)) return;
+        vistos.add(r.url);
+        fotos.push({
+          url: r.url,
+          pagina: r.foreign_landing_url || r.url,
+          titulo: textoLimpio(r.title || 'BTS'),
+          autor: textoLimpio(r.creator || '').slice(0, 60),
+          licencia: r.license ? 'CC ' + r.license.toUpperCase() : '',
+        });
+      }));
+      if (!fotos.length) throw new Error('sin fotos');
+      mostrar(fotos);
+    })
+    .catch(() => {
+      vacio.textContent = 'No se pudieron cargar las imágenes. Revisá la conexión.';
+    });
+})();
+</script>
+</body>
+</html>
