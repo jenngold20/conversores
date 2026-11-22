@@ -1208,6 +1208,7 @@
   }
 
   // ---------- Edición a mano: "Para revisar" y Excel ----------
+  const esFutbol = () => !!archivo && /f[uú]tbol/i.test(archivo.name);
   const dudasConv = new Set(); // índices de "Para revisar" ya pasados al Excel
   const EDITABLES = ['categoria', 'date', 'time', 'weekday', 'files', 'grupo', 'tipoServicio', 'detalleServicio',
     'codigo', 'numeroOrdenSap', 'direccion', 'contexto', 'caption'];
@@ -1242,6 +1243,7 @@
     const txt = $('tablaDudas').querySelector('textarea[data-d="' + i + '"]').value;
     const r = engine.filaDesdeTexto(txt, resultado.revisar[i].hora);
     if (r.error) { alert('No se pudo convertir: ' + r.error + '. Revisá el texto.'); return; }
+    if (esFutbol()) r.filas.forEach((f) => { f.grupo = 'PARTIDO DE FUTBOL'; });
     resultado.registros.push(...r.filas);
     dudasConv.add(i);
     renderDudas();
@@ -1295,6 +1297,8 @@
     $('resultado').hidden = false;
 
     $('dudasN').textContent = resultado.revisar.length;
+    // Chats de fútbol (por el nombre del archivo): el grupo es PARTIDO DE FUTBOL.
+    if (esFutbol()) resultado.registros.forEach((f) => { f.grupo = 'PARTIDO DE FUTBOL'; });
     dudasConv.clear();
     renderDudas();
     $('dudas').hidden = false;
