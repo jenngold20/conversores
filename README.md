@@ -10,3 +10,4 @@ Dos herramientas para procesar chats de WhatsApp de operativos:
 - Normalización de direcciones y calles
 - Validación con USIG (geocodificador de CABA)
 - Interfaz web, todo se procesa en el navegador
+# Quickdraw Test
