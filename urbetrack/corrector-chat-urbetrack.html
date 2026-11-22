@@ -658,7 +658,7 @@
   // "Pasteur 393 (esq. Corrientes)" → "Pasteur 393": el cruce no forma parte de la dirección.
   // Si la calle no tiene altura ("Av. 9 de Julio esquina Lavalle"), el cruce pasa a ser una intersección: "Av. 9 de Julio y Lavalle".
   const quitarEsquina = (l) => {
-    const s = clean(l).replace(/\s*\((?:esq\.?|esquina)[^)]*\)\s*$/i, '');
+    const s = clean(l).replace(/\s*\((?:esq\.?|esquina)[^)]*\)\s*$/i, '').replace(/(\d)\.$/, '$1'); // "2233." → "2233"
     const m = /^(.*?)\s+(?:esq\.?|esquina)\s+(.*)$/i.exec(s);
     if (!m) return s;
     if (/\d{1,5}[a-z]?$/i.test(m[1])) return m[1]; // tiene altura: se saca el cruce
