@@ -706,12 +706,15 @@
     return out;
   }
 
-  function corregirIncidencia(cap) {
+  function corregirIncidencia(cap, tipoArchivo) {
     // Número de reclamo ("Reclamo: S01246129/26"): va en el número de orden SAP.
     const numeroReclamo = (/\b(S\d{5,}\/\d{2})\b/i.exec(cap[0] || '') || [])[1] || '';
     cap = separarActas(separarDireccionesAbreviadas(cap.map(quitarEsquina)));
     // Sin palabra de tipo pero con acta: es un secuestro.
     if (!tipoOf(cap[0]) && cap.some((l) => RE_ACTA_EN_LINEA.test(clean(l)))) cap = ['Secuestro', ...cap];
+    // Si viene de un archivo de futbol o eventos, forzar ese tipo
+    if (tipoArchivo === 'futbol') cap[0] = 'Relevamiento';
+    if (tipoArchivo === 'evento') cap[0] = 'Evento';
     // Todo en una sola línea: "Relevamiento Avellaneda Av nazca 277 sin incidencia"
     const separada = partirLineaUnica(cap[0]);
     if (separada) cap = [...separada, ...cap.slice(1)];
@@ -862,23 +865,26 @@
     return { date: fecha, time: h + ':' + m[5], datetime: fecha + ' ' + hh + ':' + m[5], weekday: dia };
   }
 
-  function filaUrbetrack(e, m, archivo, direccion, reclamo) {
+  function filaUrbetrack(e, m, archivo, direccion, reclamo, tipoArchivo) {
     const f = fechaDeStamp(e.stamp) || { date: '', time: '', datetime: '', weekday: '' };
     const tipo = m[0];
     const sec = tipo === 'Secuestro';
     const acta = sec ? (m.find((x) => /^AS\d+$/.test(x)) || '') : '';
     const evento = tipo === 'Evento';
+    // Futbol: grupo siempre PARTIDO DE FUTBOL, tipoServicio RELEVAMIENTO, detalleServicio SIN INCIDENCIAS (o el infractor si hay secuestro)
+    const esFutbol = tipoArchivo === 'futbol';
+    const esEvento = tipoArchivo === 'evento';
     // Hoja de ruta, punto crónico y patrulla: la categoría va en el grupo, y el tipo de servicio queda en RELEVAMIENTO.
     const especial = ['Hoja de ruta', 'Punto crónico', 'Patrulla', 'Reclamo'].includes(tipo);
-    const grupo = sec ? 'OFICIO' : evento ? 'EVENTO' : especial ? tipo.toUpperCase() : 'RELEVAMIENTO';
+    const grupo = esFutbol ? 'PARTIDO DE FUTBOL' : esEvento ? 'EVENTO' : sec ? 'OFICIO' : evento ? 'EVENTO' : especial ? tipo.toUpperCase() : 'RELEVAMIENTO';
     const fila = {
       categoria: sec ? 'SECUESTRO' : 'CHECKPOINT',
       date: f.date, time: f.time, datetime: f.datetime, weekday: f.weekday,
       files: archivo ? [archivo] : [],
       caption: m.join('\n'),
       grupo,
-      tipoServicio: sec ? 'SECUESTRO' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
-      detalleServicio: m[m.length - 1].toUpperCase(),
+      tipoServicio: esFutbol ? (sec ? 'SECUESTRO' : 'RELEVAMIENTO') : sec ? 'SECUESTRO' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
+      detalleServicio: esFutbol ? (sec ? m[m.length - 1].toUpperCase() : 'SIN INCIDENCIAS') : m[m.length - 1].toUpperCase(),
       codigo: acta,
       precinto: '', numeroOrdenSap: reclamo || '',
       direccion,
@@ -1000,7 +1006,7 @@
   }
 
   // ---------- Transformación del chat completo ----------
-  function transformar(text) {
+  function transformar(text, tipoArchivo) {
     const entries = unirTextoConFoto(parse(text));
     const out = [];
     const log = [];      // cambios y borrados
@@ -1017,7 +1023,7 @@
         const cap = e.rest.map(clean).filter(Boolean);
         if (!cap.length) { out.push(...e.raw, ...e.rest); continue; } // foto sin texto: se mantiene
         stats.incidencias++;
-        const res = corregirIncidencia(cap);
+        const res = corregirIncidencia(cap, tipoArchivo);
         // Foto con texto que no es una incidencia (ej. comentarios de la brigada): se borra
         if (res.status === 'revisar' && /tipo de incidencia no reconocido/.test(res.motivo)) {
           stats.borradas++;
@@ -1039,7 +1045,7 @@
         for (const m of res.mensajes) direcciones.push({ hora: e.stamp, direccion: res.direccion });
         const archivo = (/(IMG-[^\s]+?\.\w+)/i.exec(e.body) || [])[1] || '';
         for (const m of res.mensajes) {
-          const fila = filaUrbetrack(e, m, archivo, res.direccion, res.reclamo);
+          const fila = filaUrbetrack(e, m, archivo, res.direccion, res.reclamo, tipoArchivo);
           const ult = registros[registros.length - 1];
           // Igual que la página original: la foto y su copia "<Multimedia omitido>" son una sola fila
           if (ult && ult.caption === fila.caption) {
@@ -1089,12 +1095,12 @@
   }
 
   // Convierte un texto editado a mano (líneas separadas por " / " o por salto de línea) en filas del Excel.
-  function filaDesdeTexto(texto, stamp) {
+  function filaDesdeTexto(texto, stamp, tipoArchivo) {
     const cap = String(texto || '').split(/\s+\/\s+|\n/).map(clean).filter(Boolean);
-    const res = corregirIncidencia(cap);
+    const res = corregirIncidencia(cap, tipoArchivo);
     if (res.status !== 'ok') return { error: res.motivo || 'no se pudo convertir' };
     const e = { stamp: stamp || '', sender: '', rest: [] };
-    return { filas: res.mensajes.map((m) => filaUrbetrack(e, m, '', res.direccion, res.reclamo)) };
+    return { filas: res.mensajes.map((m) => filaUrbetrack(e, m, '', res.direccion, res.reclamo, tipoArchivo)) };
   }
 
   const api = { transformar, filaDesdeTexto, corregirIncidencia, parse, clasificar, normalizarDireccion, normalizarNombre, registrarCalle, esVerificada, crearXlsx, COLUMNAS_URBETRACK, INFRACTORES, ZONAS, CALLES };
@@ -1107,7 +1113,7 @@
 (function () {
   const engine = window.UrbeTransform;
   const $ = (id) => document.getElementById(id);
-  let archivo = null, texto = '', resultado = null;
+  let archivo = null, texto = '', resultado = null, tipoArchivo = null;
 
   function escapar(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
@@ -1241,7 +1247,7 @@
     if (!b || !resultado) return;
     const i = Number(b.dataset.conv);
     const txt = $('tablaDudas').querySelector('textarea[data-d="' + i + '"]').value;
-    const r = engine.filaDesdeTexto(txt, resultado.revisar[i].hora);
+    const r = engine.filaDesdeTexto(txt, resultado.revisar[i].hora, tipoArchivo);
     if (r.error) { alert('No se pudo convertir: ' + r.error + '. Revisá el texto.'); return; }
     resultado.registros.push(...r.filas);
     dudasConv.add(i);
@@ -1276,12 +1282,17 @@
   $('procesar').addEventListener('click', async () => {
     if (!archivo) return;
     texto = await archivo.text();
-    resultado = engine.transformar(texto);
+    // Detectar si es futbol, evento u otro tipo por el nombre del archivo
+    const nombreArchivo = archivo.name.toLowerCase();
+    tipoArchivo = null;
+    if (/futbol/.test(nombreArchivo)) tipoArchivo = 'futbol';
+    else if (/evento/.test(nombreArchivo)) tipoArchivo = 'evento';
+    resultado = engine.transformar(texto, tipoArchivo);
     let aviso = null;
     if ($('usig').checked) {
       $('procesar').disabled = true; $('procesar').textContent = 'Buscando calles...';
       const aprendidas = await resolverCalles(resultado, (i, t) => { $('procesar').textContent = 'Calles ' + i + '/' + t; });
-      if (aprendidas) resultado = engine.transformar(texto);
+      if (aprendidas) resultado = engine.transformar(texto, tipoArchivo);
       $('procesar').textContent = 'Verificando calles...';
       aviso = await verificarUsig(resultado, (i, t) => { $('procesar').textContent = 'USIG ' + i + '/' + t; });
       $('procesar').disabled = false; $('procesar').textContent = 'Procesar chat';
