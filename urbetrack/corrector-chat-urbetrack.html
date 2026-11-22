@@ -323,7 +323,7 @@
     { name: 'Cerviño', re: /cervi/i },
     { name: 'Mataderos', re: /matadero/i },
     { name: 'Barrio Chino', re: /barrio chino/i },
-    { name: 'Corrientes Cultural', re: /corrientes/i },
+    { name: 'Corrientes Cultural', re: /corrientes|c\.?\s*cultural/i },
     { name: 'Retiro', re: /retiro/i },
     { name: 'Constitución', re: /constituci/i },
     { name: 'Parque 3 de Febrero', re: /3 de febrero|tres de febrero/i },
@@ -388,7 +388,7 @@
     'Gral Paz', 'José León Suárez', 'Cuzco', 'Hornos', 'Pasteur', 'Castelli', 'Valentín Gómez', 'Ortiz', 'Alvear', 'Virrey Vertiz', '11 de Septiembre', 'Las Heras', 'Pedro Montt', 'Kennedy', 'Juan Domingo Perón', 'Carlos Pellegrini', '9 de Julio', 'Lavalle', 'Figueroa Alcorta', 'Alma Fuerte',
     'Jorge Newbery', 'Guzmán', 'Dorrego', 'Roque Pérez', 'Ramón Freire', 'García del Río', 'Superí', 'Chivilcoy',
     'Alberto Gerchunoff', 'Rogelio Yrurtia', 'Lincoln', 'Arenales', 'Nueva York', 'Brandsen',
-    'Medrano', 'Bartolomé Mitre', 'Varela', 'Crisóstomo Álvarez', "O'Higgins", 'Juramento', 'Castañares', 'Defensa'];
+    'Medrano', 'Bartolomé Mitre', 'Varela', 'Crisóstomo Álvarez', "O'Higgins", 'Juramento', 'Castañares', 'Defensa', 'Leopoldo Marechal', 'Franklin', 'Monteagudo', 'Patagones', 'Conde', 'Pedro de Mendoza'];
   // Calles que el operador confirmó en el callejero de CABA aunque USIG no las tenga.
   // Dentro del rango de alturas se aceptan sin consultar USIG. Fuera del rango, sigue la verificación normal.
   const CALLES_VERIFICADAS = [
@@ -625,6 +625,13 @@
   // Devuelve { status: 'ok', mensajes: [[lineas...], ...], cambios: [...] }
   //        | { status: 'borrar', motivo }
   //        | { status: 'revisar', motivo }
+  // Dirección por defecto de una zona (compartido/calles.js), comparando sin tildes ni mayúsculas.
+  function sinDireccionDe(zona) {
+    const mapa = ((root.CALLES_COMPARTIDAS || {}).sinDireccion) || {};
+    const k = Object.keys(mapa).find((z) => sinAcentos(z) === sinAcentos(zona));
+    return k ? mapa[k] : null;
+  }
+
   // Un acta ("As 17609", "AS/35380") puede venir en cualquier parte de una línea, en cualquier zona.
   // "As 17609", "AS/17609", "Acta 17609" (no "AC": eso es otra cosa).
   const RE_ACTA_EN_LINEA = /\b(?:a\s*\/?\s*s\s*\/?\s*|acta(?:\s+de\s+secuestro)?:?\s*)(\d{4,})\b/i;
@@ -704,7 +711,7 @@
     const claveRegla = /^la rural$/i.test(zona) ? 'La Rural' : (/rural/i.test(zona) ? 'Cerviño' : zona);
     // Correcciones compartidas con SISEP (compartido/calles.js) + las propias de cada zona.
     const corrComp = ((root.CALLES_COMPARTIDAS || {}).correcciones) || [];
-    const reglas = [...corrComp.filter((c) => c.zona === '*' || c.zona === claveRegla), ...(REGLAS_DIRECCION[claveRegla] || [])];
+    const reglas = [...corrComp.filter((c) => c.zona === '*' || sinAcentos(c.zona) === sinAcentos(claveRegla)), ...(REGLAS_DIRECCION[claveRegla] || [])];
     // Sin dirección, una línea de texto que coincide con una regla de la zona es la dirección
     // ("Lima oeste", "Centro de trasbordo", "Metrobús Brasil"). Se toma y no queda como comentario.
     const pista = !direccion ? resto.map(clean).find((l) => clasificar(l) === 'comentario' && reglas.some((r) => r.re.test(l))) : undefined;
@@ -751,8 +758,9 @@
 
     if (!direccion) {
       if (tipo === 'Secuestro') return { status: 'borrar', motivo: 'secuestro sin dirección' };
-      if (FALLBACK_SIN_DIRECCION[zona]) {
-        direccion = FALLBACK_SIN_DIRECCION[zona];
+      const fb = FALLBACK_SIN_DIRECCION[zona] || sinDireccionDe(zona);
+      if (fb) {
+        direccion = fb;
         cambios.push({ tipo: 'dirección (sin dirección)', de: '', a: direccion });
       } else {
         return { status: 'revisar', motivo: 'sin dirección y la zona no tiene regla' };

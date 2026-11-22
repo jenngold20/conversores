@@ -683,8 +683,14 @@ function alturaSISEP(direccion) {
 
 function aplicarReglasCalle(zona, dir, tipo) {
   // Correcciones compartidas con Urbetrack (compartido/calles.js).
+  // Sin dirección: dirección por defecto de la zona (compartido/calles.js), solo en relevamientos.
+  if (!dir && tipo === 'No secuestro') {
+    const mapa = (root.CALLES_COMPARTIDAS || {}).sinDireccion || {};
+    const k = Object.keys(mapa).find((z) => z.toLowerCase() === String(zona).toLowerCase());
+    if (k) return { dir: mapa[k], nota: 'sin dirección → ' + mapa[k] + ' (compartido)' };
+  }
   for (const c of ((root.CALLES_COMPARTIDAS || {}).correcciones || [])) {
-    if (c.zona !== '*' && c.zona !== zona) continue;
+    if (c.zona !== '*' && c.zona.toLowerCase() !== String(zona).toLowerCase()) continue;
     if (dir && c.re.test(dir)) {
       const conAv = c.zonasConAv && c.zonasConAv.test(zona);
       const nuevo = c.fn ? c.fn(dir.match(c.re)) : (conAv && c.toAv ? c.toAv : c.to);
