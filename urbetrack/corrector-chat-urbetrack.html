@@ -712,9 +712,6 @@
     cap = separarActas(separarDireccionesAbreviadas(cap.map(quitarEsquina)));
     // Sin palabra de tipo pero con acta: es un secuestro.
     if (!tipoOf(cap[0]) && cap.some((l) => RE_ACTA_EN_LINEA.test(clean(l)))) cap = ['Secuestro', ...cap];
-    // Si viene de un archivo de futbol o eventos, forzar ese tipo
-    if (tipoArchivo === 'futbol') cap[0] = 'Relevamiento';
-    if (tipoArchivo === 'evento') cap[0] = 'Evento';
     // Todo en una sola línea: "Relevamiento Avellaneda Av nazca 277 sin incidencia"
     const separada = partirLineaUnica(cap[0]);
     if (separada) cap = [...separada, ...cap.slice(1)];
@@ -871,7 +868,7 @@
     const sec = tipo === 'Secuestro';
     const acta = sec ? (m.find((x) => /^AS\d+$/.test(x)) || '') : '';
     const evento = tipo === 'Evento';
-    // Futbol: grupo siempre PARTIDO DE FUTBOL, tipoServicio RELEVAMIENTO, detalleServicio SIN INCIDENCIAS (o el infractor si hay secuestro)
+    // Futbol: grupo siempre PARTIDO DE FUTBOL, tipoServicio según tipo (SECUESTRO o RELEVAMIENTO), detalleServicio es el infractor o SIN INCIDENCIAS
     const esFutbol = tipoArchivo === 'futbol';
     const esEvento = tipoArchivo === 'evento';
     // Hoja de ruta, punto crónico y patrulla: la categoría va en el grupo, y el tipo de servicio queda en RELEVAMIENTO.
@@ -883,8 +880,8 @@
       files: archivo ? [archivo] : [],
       caption: m.join('\n'),
       grupo,
-      tipoServicio: esFutbol ? (sec ? 'SECUESTRO' : 'RELEVAMIENTO') : sec ? 'SECUESTRO' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
-      detalleServicio: esFutbol ? (sec ? m[m.length - 1].toUpperCase() : 'SIN INCIDENCIAS') : m[m.length - 1].toUpperCase(),
+      tipoServicio: sec ? 'SECUESTRO' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
+      detalleServicio: sec ? m[m.length - 1].toUpperCase() : (esFutbol ? 'SIN INCIDENCIAS' : m[m.length - 1].toUpperCase()),
       codigo: acta,
       precinto: '', numeroOrdenSap: reclamo || '',
       direccion,
