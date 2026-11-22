@@ -341,6 +341,7 @@
     { name: 'Mataderos', re: /matadero/i },
     { name: 'Barrio Chino', re: /barrio chino/i },
     { name: 'Corrientes Cultural', re: /corrientes|c\.?\s*cultural/i },
+    { name: 'Cafecito', re: /cafecito/i },
     { name: 'Retiro', re: /retiro/i },
     { name: 'Constitución', re: /constituci/i },
     { name: 'Parque 3 de Febrero', re: /3 de febrero|tres de febrero/i },
@@ -713,7 +714,7 @@
     // Todo en una sola línea: "Relevamiento Avellaneda Av nazca 277 sin incidencia"
     const separada = partirLineaUnica(cap[0]);
     if (separada) cap = [...separada, ...cap.slice(1)];
-    const tipo = tipoOf(cap[0]);
+    let tipo = tipoOf(cap[0]);
     if (!tipo) return { status: 'revisar', motivo: 'tipo de incidencia no reconocido' };
     if (cap.length < 2) return { status: 'revisar', motivo: 'formato incompleto' };
 
@@ -726,6 +727,8 @@
     // Si la segunda línea es el acta ("As 17609") o una dirección, el mensaje no trae línea de zona.
     const hayZona = cap[1] !== undefined && !actaOf(cap[1]) && clasificar(cap[1]) !== 'direccion';
     let zona = hayZona ? zonaOf(cap[1]) : '';
+    // Cafecito es un evento: un relevamiento ahí sale como Evento – Relevamiento – Sin incidencias.
+    if (sinAcentos(zona) === 'cafecito' && tipo === 'Relevamiento') tipo = 'Evento';
     const cambios = [];
     let i = hayZona ? 2 : 1;
     let direccion = '';
