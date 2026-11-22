@@ -585,7 +585,8 @@
     const tipo = tipoOf(t[1]);
     let resto = s.slice(t[0].length);
     const z = ZONAS.find((x) => sinAcentos(resto).startsWith(sinAcentos(x.name)));
-    if (!z) return null;
+    // Sin zona en la misma línea: "Relevamiento Lisandro de la Torre 2233" → tipo + dirección (la zona queda vacía).
+    if (!z) return /\d/.test(resto) ? [tipo, clean(resto)] : null;
     resto = resto.slice(z.name.length).replace(/^\s*\.?\s*/, '');
     // Si la zona y la calle se llaman igual (Florida 143), la dirección lleva el nombre de la zona
     const conNombre = (d) => (/^\d/.test(d) ? z.name + ' ' + d : d);
