@@ -152,6 +152,9 @@
 
   /* ---------- Tablas ---------- */
   #tablaDudas, #tablaCambios { border: 1px solid var(--line); border-radius: var(--r-md); overflow: auto; max-height: 60vh; }
+  #tablaFilas { overflow: auto; max-height: 60vh; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); }
+  #tablaFilas input { min-width: 110px; font: inherit; font-size: 12.5px; padding: 4px 6px; border: 1px solid var(--line-2); border-radius: 6px; background: #fff; }
+  #tablaDudas textarea { width: 100%; min-width: 240px; font: inherit; font-size: 12.5px; padding: 4px 6px; border: 1px solid var(--line-2); border-radius: 6px; }
   table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
   th {
     position: sticky; top: 0; z-index: 1; text-align: left; white-space: nowrap; padding: 11px 12px;
@@ -267,6 +270,20 @@
       </div>
     </div>
     <div id="tablaDudas"></div>
+  </section>
+
+  <section class="card" id="editor" hidden>
+    <div class="card-head">
+      <span class="card-icon ok" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+      <div>
+        <h2>Excel y chat corregido, a mano <span class="count" id="filasN"></span></h2>
+        <p class="muted">Editá cualquier celda. Lo que cambies es lo que se descarga.</p>
+      </div>
+    </div>
+    <div class="row" style="margin-top:0"><button class="btn sec" id="agregarFila">Agregar fila</button></div>
+    <div id="tablaFilas" style="margin-top:12px"></div>
+    <h3 style="margin:20px 0 8px;font:600 15px/1.3 var(--f-display)">Chat corregido</h3>
+    <textarea id="chatEditado" rows="12" style="width:100%;font-family:var(--f-mono);font-size:12.5px;border:1px solid var(--line-2);border-radius:var(--r-md);padding:10px"></textarea>
   </section>
 
   <section class="card" id="cambios" hidden>
@@ -1067,7 +1084,16 @@
     return { texto: out.join('\n'), log, revisar, stats, direcciones, registros };
   }
 
-  const api = { transformar, corregirIncidencia, parse, clasificar, normalizarDireccion, normalizarNombre, registrarCalle, esVerificada, crearXlsx, COLUMNAS_URBETRACK, INFRACTORES, ZONAS, CALLES };
+  // Convierte un texto editado a mano (líneas separadas por " / " o por salto de línea) en filas del Excel.
+  function filaDesdeTexto(texto, stamp) {
+    const cap = String(texto || '').split(/\s+\/\s+|\n/).map(clean).filter(Boolean);
+    const res = corregirIncidencia(cap);
+    if (res.status !== 'ok') return { error: res.motivo || 'no se pudo convertir' };
+    const e = { stamp: stamp || '', sender: '', rest: [] };
+    return { filas: res.mensajes.map((m) => filaUrbetrack(e, m, '', res.direccion, res.reclamo)) };
+  }
+
+  const api = { transformar, filaDesdeTexto, corregirIncidencia, parse, clasificar, normalizarDireccion, normalizarNombre, registrarCalle, esVerificada, crearXlsx, COLUMNAS_URBETRACK, INFRACTORES, ZONAS, CALLES };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.UrbeTransform = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -1087,6 +1113,7 @@
     $('fname').classList.toggle('picked', !!f);
     $('procesar').disabled = !f;
     $('descargar').disabled = true; $('descargarReporte').disabled = true; $('descargarXlsx').disabled = true;
+    $('editor').hidden = true;
     $('resultado').hidden = true; $('dudas').hidden = true; $('cambios').hidden = true;
   }
 
@@ -1177,6 +1204,71 @@
     return null;
   }
 
+  // ---------- Edición a mano: "Para revisar" y Excel ----------
+  const dudasConv = new Set(); // índices de "Para revisar" ya pasados al Excel
+  const EDITABLES = ['categoria', 'date', 'time', 'weekday', 'files', 'grupo', 'tipoServicio', 'detalleServicio',
+    'codigo', 'numeroOrdenSap', 'direccion', 'contexto', 'caption'];
+
+  function renderDudas() {
+    const lista = resultado.revisar;
+    $('tablaDudas').innerHTML = lista.length
+      ? '<table><tr><th>Hora</th><th>Texto (editable)</th><th>Motivo</th><th></th></tr>' +
+        lista.map((x, i) => '<tr><td>' + escapar(x.hora) + '</td><td><textarea data-d="' + i + '" rows="2">' + escapar(x.original) +
+          '</textarea></td><td><span class="tag t-warn">' + escapar(x.motivo) + '</span></td><td><button class="btn sec" data-conv="' + i + '"' +
+          (dudasConv.has(i) ? ' disabled' : '') + ' style="padding:6px 10px;min-height:0;font-size:12px">' +
+          (dudasConv.has(i) ? 'En el Excel' : 'Pasar al Excel') + '</button></td></tr>').join('') + '</table>'
+      : '<div class="empty">Nada para revisar.</div>';
+  }
+
+  function renderEditor() {
+    const regs = resultado.registros;
+    $('filasN').textContent = regs.length;
+    $('tablaFilas').innerHTML = regs.length
+      ? '<table><tr><th>#</th>' + EDITABLES.map((k) => '<th>' + k + '</th>').join('') + '<th></th></tr>' +
+        regs.map((f, i) => '<tr><td>' + (i + 1) + '</td>' + EDITABLES.map((k) => {
+          const v = k === 'files' ? (f.files || []).join('|') : (f[k] == null ? '' : f[k]);
+          return '<td><input data-r="' + i + '" data-k="' + k + '" value="' + escapar(v) + '"></td>';
+        }).join('') + '<td><button class="btn sec" data-del="' + i + '" style="padding:6px 10px;min-height:0;font-size:12px">Quitar</button></td></tr>').join('') + '</table>'
+      : '<div class="empty">No hay filas. Pasá un reporte desde "Para revisar" o agregá una fila.</div>';
+  }
+
+  $('tablaDudas').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-conv]');
+    if (!b || !resultado) return;
+    const i = Number(b.dataset.conv);
+    const txt = $('tablaDudas').querySelector('textarea[data-d="' + i + '"]').value;
+    const r = engine.filaDesdeTexto(txt, resultado.revisar[i].hora);
+    if (r.error) { alert('No se pudo convertir: ' + r.error + '. Revisá el texto.'); return; }
+    resultado.registros.push(...r.filas);
+    dudasConv.add(i);
+    renderDudas();
+    renderEditor();
+  });
+
+  $('tablaFilas').addEventListener('change', (ev) => {
+    const el = ev.target;
+    if (!el.dataset.k || !resultado) return;
+    const f = resultado.registros[Number(el.dataset.r)];
+    const k = el.dataset.k;
+    f[k] = k === 'files' ? el.value.split('|').map((s) => s.trim()).filter(Boolean) : el.value;
+  });
+
+  $('tablaFilas').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-del]');
+    if (!b || !resultado) return;
+    resultado.registros.splice(Number(b.dataset.del), 1);
+    renderEditor();
+  });
+
+  $('agregarFila').addEventListener('click', () => {
+    if (!resultado) return;
+    const f = {};
+    engine.COLUMNAS_URBETRACK.forEach((k) => { f[k] = ''; });
+    f.files = []; f.categoria = 'CHECKPOINT';
+    resultado.registros.push(f);
+    renderEditor();
+  });
+
   $('procesar').addEventListener('click', async () => {
     if (!archivo) return;
     texto = await archivo.text();
@@ -1200,11 +1292,12 @@
     $('resultado').hidden = false;
 
     $('dudasN').textContent = resultado.revisar.length;
-    $('tablaDudas').innerHTML = resultado.revisar.length
-      ? '<table><tr><th>Hora</th><th>Texto original</th><th>Motivo</th></tr>' +
-        resultado.revisar.map((x) => '<tr><td>' + escapar(x.hora) + '</td><td>' + escapar(x.original) + '</td><td><span class="tag t-warn">' + escapar(x.motivo) + '</span></td></tr>').join('') + '</table>'
-      : '<div class="empty">Nada para revisar.</div>';
+    dudasConv.clear();
+    renderDudas();
     $('dudas').hidden = false;
+    renderEditor();
+    $('chatEditado').value = resultado.texto;
+    $('editor').hidden = false;
 
     $('cambiosN').textContent = resultado.log.length;
     $('tablaCambios').innerHTML = resultado.log.length
@@ -1242,7 +1335,7 @@
   }
 
   // Mismo nombre que el original
-  $('descargar').addEventListener('click', () => { if (resultado) bajar(archivo.name, resultado.texto); });
+  $('descargar').addEventListener('click', () => { if (resultado) bajar(archivo.name, $('chatEditado').value); });
 
   $('descargarReporte').addEventListener('click', () => {
     if (!resultado) return;
