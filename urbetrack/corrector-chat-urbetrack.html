@@ -584,21 +584,18 @@
   // Clasifica una línea de caption (no tipo, ni zona, ni la primera dirección).
   function clasificar(t) {
     const s = clean(t);
-    if (!s) return ‘vacio’;
-    if (actaOf(s)) return ‘acta’;
-    if (/^sin\s+incidenc/i.test(s)) return ‘sin’;
-    if (/secuestr|decomis|ocupaci/i.test(s)) return ‘detalle’;
-    if (GRUPOS.test(s)) return ‘grupo’;
-    // Texto muy largo (más de 10 palabras) es comentario, no dirección
-    const palabras = s.split(/\s+/).length;
-    if (palabras > 10) return ‘comentario’;
-    const comentario = /\bno\b|visualiz|observ|se van|desplaz|eleven|paso|gente/i.test(s) || palabras > 4;
-    if (!comentario && /vendedor|senegal|mantero|artesan|comercio|food|parrilla|puesto|ambulante/i.test(s)) return ‘infractor’;
-    if (/^\d{1,2}\s+de\s+[a-záéíóúñü]+(\s+de\s+\d{4})?\s+\d{1,5}[a-z]?$/i.test(s)) return ‘direccion’; // "11 de septiembre 1900"
-    if (/^(av\.?\s+)?\d{1,2}\s+de\s+[a-záéíóúñü]+\s+y\s+[a-záéíóúñü.\s]+$/i.test(s)) return ‘direccion’; // "Av. 9 de Julio y Lavalle"
-    if (/^[a-záéíóúñü.\s]+?\s+\d{1,5}[a-z]?$/i.test(s)) return ‘direccion’;          // "Campana 200", "Av nazca 5"
-    if (/^[a-záéíóúñü.’’\s]+?\s+y\s+[a-záéíóúñü.’’\s]+$/i.test(s)) return ‘direccion’;   // "Av. Avellaneda y Nazca", "Juramento y O’Higgins"
-    return ‘comentario’;
+    if (!s) return 'vacio';
+    if (actaOf(s)) return 'acta';
+    if (/^sin\s+incidenc/i.test(s)) return 'sin';
+    if (/secuestr|decomis|ocupaci/i.test(s)) return 'detalle';
+    if (GRUPOS.test(s)) return 'grupo';
+    const comentario = /\bno\b|visualiz|observ|se van|desplaz|eleven|paso|gente/i.test(s) || s.split(' ').length > 4;
+    if (!comentario && /vendedor|senegal|mantero|artesan|comercio|food|parrilla|puesto|ambulante/i.test(s)) return 'infractor';
+    if (/^\d{1,2}\s+de\s+[a-záéíóúñü]+(\s+de\s+\d{4})?\s+\d{1,5}[a-z]?$/i.test(s)) return 'direccion'; // "11 de septiembre 1900"
+    if (/^(av\.?\s+)?\d{1,2}\s+de\s+[a-záéíóúñü]+\s+y\s+[a-záéíóúñü.\s]+$/i.test(s)) return 'direccion'; // "Av. 9 de Julio y Lavalle"
+    if (/^[a-záéíóúñü.\s]+?\s+\d{1,5}[a-z]?$/i.test(s)) return 'direccion';          // "Campana 200", "Av nazca 5"
+    if (/^[a-záéíóúñü.'’\s]+?\s+y\s+[a-záéíóúñü.'’\s]+$/i.test(s)) return 'direccion';   // "Av. Avellaneda y Nazca", "Juramento y O'Higgins"
+    return 'comentario';
   }
 
   // "Relevamiento Avellaneda Av nazca 277 sin incidencia" → [tipo, zona, dirección, resultado]
