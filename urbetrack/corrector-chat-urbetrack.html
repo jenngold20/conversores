@@ -384,6 +384,10 @@
     ],
     'Cafecito': [
       { re: /interior del parque/i, to: 'Av. Figueroa Alcorta 2302' }
+    ],
+    'River': [
+      // Udaondo: si la altura es mayor a 1500, bajar a 1500
+      { re: /^(av\.?\s*)?udaondo\s+(\d{1,5}[a-z]?)$/i, fn: (m) => { const h = parseInt(m[2], 10); return 'Udaondo ' + (h > 1500 ? '1500' : m[2]); } }
     ]
   };
 
