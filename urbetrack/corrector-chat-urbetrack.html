@@ -386,8 +386,10 @@
       { re: /interior del parque/i, to: 'Av. Figueroa Alcorta 2302' }
     ],
     'River': [
-      // Udaondo: si la altura es mayor a 1500, bajar a 1500
-      { re: /^(av\.?\s*)?udaondo\s+(\d{1,5}[a-z]?)$/i, fn: (m) => { const h = parseInt(m[2], 10); return 'Udaondo ' + (h > 1500 ? '1500' : m[2]); } }
+      // Guillermo Udaondo: si la altura es mayor a 1500, bajar a 1500
+      { re: /^(guillermo\s+)?udaondo\s+(\d{1,5}[a-z]?)$/i, fn: (m) => { const h = parseInt(m[2], 10); return 'Guillermo Udaondo ' + (h > 1500 ? '1500' : m[2]); } },
+      // Libertador: solo detectar si está solo (no junto con otra calle)
+      { re: /^(av\.?\s*)?libertador\s+(\d{1,5}[a-z]?)$/i, fn: (m) => 'Libertador ' + m[2] }
     ]
   };
 
@@ -413,7 +415,7 @@
     'Jorge Newbery', 'Guzmán', 'Dorrego', 'Roque Pérez', 'Ramón Freire', 'García del Río', 'Superí', 'Chivilcoy',
     'Alberto Gerchunoff', 'Rogelio Yrurtia', 'Lincoln', 'Arenales', 'Nueva York', 'Brandsen',
     'Medrano', 'Bartolomé Mitre', 'Varela', 'Crisóstomo Álvarez', "O'Higgins", 'Juramento', 'Castañares', 'Defensa', 'Leopoldo Marechal', 'Franklin', 'Monteagudo', 'Patagones', 'Conde', 'Pedro de Mendoza',
-    'Chile', 'Belgrano', 'Independencia', 'Estados Unidos', 'Asamblea'];
+    'Chile', 'Belgrano', 'Independencia', 'Estados Unidos', 'Asamblea', 'Guillermo Udaondo', 'Libertador'];
   // Calles que el operador confirmó en el callejero de CABA aunque USIG no las tenga.
   // Dentro del rango de alturas se aceptan sin consultar USIG. Fuera del rango, sigue la verificación normal.
   const CALLES_VERIFICADAS = [
@@ -743,7 +745,9 @@
 
     // Si no hay dirección clasificada, buscar la primera línea que se parezca a una dirección (con calle y número)
     if (!direccion && cap[i] !== undefined) {
-      const lineaDir = cap[i];
+      let lineaDir = cap[i];
+      // Si hay múltiples direcciones separadas por "/" o "y", tomar solo la primera
+      lineaDir = lineaDir.split(/\s*\/\s*/)[0].split(/\s+y\s+/)[0];
       if (/av\.?|avenida|calle\b/.test(lineaDir.toLowerCase()) && /\d{3,}/.test(lineaDir)) {
         direccion = clean(lineaDir);
         i++;
