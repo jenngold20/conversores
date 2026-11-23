@@ -737,6 +737,15 @@
     let direccion = '';
     if (cap[i] !== undefined && clasificar(cap[i]) === 'direccion') { direccion = clean(cap[i]); i++; }
 
+    // Si no hay dirección clasificada, buscar la primera línea que se parezca a una dirección (con calle y número)
+    if (!direccion && cap[i] !== undefined) {
+      const lineaDir = cap[i];
+      if (/av\.?|avenida|calle\b/.test(lineaDir.toLowerCase()) && /\d{3,}/.test(lineaDir)) {
+        direccion = clean(lineaDir);
+        i++;
+      }
+    }
+
     // Revisar líneas siguientes buscando dirección si no estaba en el lugar esperado
     const resto = cap.slice(i);
     // "La Rural" tiene sus propias reglas; otras zonas "rurales" usan las de Cerviño.
