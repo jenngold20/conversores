@@ -367,7 +367,9 @@
     ],
     'Once': [
       { re: /plaza/i, to: 'Rivadavia y Pueyrredón' },
-      { re: /azucenas/i, to: 'Sarmiento y Pueyrredón' }
+      { re: /azucenas/i, to: 'Sarmiento y Pueyrredón' },
+      // "Mitre" solo, en Once, es Bartolomé Mitre (Emilio Mitre queda en Parque Chacabuco)
+      { re: /^(bartolom[eé]\s+)?mitre\s+(\d{1,5}[a-z]?)$/i, fn: (m) => 'Bartolomé Mitre ' + m[2] }
     ],
     // Sin calle (vacía, "Plazoleta Norte", etc.): siempre Corrientes y Cerrito. Las intersecciones ("y") no se tocan.
     'Corrientes Cultural': [
