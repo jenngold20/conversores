@@ -54,6 +54,9 @@
       // Roque Pérez llega hasta el 4000: alturas mayores se cargan como 4000.
       { zona: '*', re: /^roque p[ée]rez\s+(\d+)$/i,
         fn: (m) => (Number(m[1]) > 4000 ? 'Roque Pérez 4000' : m[0]), nota: 'Roque Pérez mayor a 4000 → 4000' },
+      // Venancio Flores llega desde el 2901: alturas menores se cargan como 2901.
+      { zona: '*', re: /^(av\.?\s*)?venancio\s+flores\s+(\d+)$/i,
+        fn: (m) => (Number(m[2]) < 2901 ? 'Venancio Flores 2901' : m[0]), nota: 'Venancio Flores menor a 2901 → 2901' },
       ...INTERIOR,
     ],
   };
