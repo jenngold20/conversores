@@ -551,7 +551,7 @@
     const t = clean(raw);
     if (/secuestr|decomis/i.test(t)) return 'Secuestro';
     if (/re[lv]e[lv]amiento/i.test(t)) return 'Relevamiento'; // "Relevamiento" o el error "Revelamiento"
-    if (/disuasi[oó]n/i.test(t)) return 'Disuasión';
+    if (/disu[a-záéíóú]*n\b/i.test(t)) return 'Disuasión'; // tolera tipeos: "Disuacion", "Disuasion"
     if (/^reclamo\b/i.test(t)) return 'Reclamo';
     if (/^evento\b/i.test(t)) return 'Evento';
     if (/hoja de ruta/i.test(t)) return 'Hoja de ruta';
@@ -851,8 +851,14 @@
       return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion, reclamo: numeroReclamo };
     }
     if (tipo === 'Disuasión' || tipo === 'Evento') {
-      const clasifEv = tipo === 'Disuasión' ? 'Disuasión' : 'Relevamiento';
       const ultimoEv = tipo === 'Disuasión' ? (infra || 'MANTERO') : 'Sin incidencias';
+      // Disuasión fuera de un chat de eventos (Avellaneda, otros polígonos) es OFICIO – Disuasión – infractor.
+      if (tipo === 'Disuasión' && tipoArchivo !== 'evento' && tipoArchivo !== 'futbol') {
+        const ultimoOficio = infra || 'PUESTO DE VENTA AMBULANTE';
+        const mensajes = [['Disuasión', zona, direccion, ultimoOficio].filter((x) => x !== '')];
+        return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion };
+      }
+      const clasifEv = tipo === 'Disuasión' ? 'Disuasión' : 'Relevamiento';
       const mensajes = [['Evento', zona, direccion, clasifEv, ultimoEv].filter((x) => x !== '')];
       return { status: 'ok', mensajes, cambios, zona, tipo, avisos, direccion };
     }
@@ -894,14 +900,16 @@
     const esEvento = tipoArchivo === 'evento';
     // Hoja de ruta, punto crónico y patrulla: la categoría va en el grupo, y el tipo de servicio queda en RELEVAMIENTO.
     const especial = ['Hoja de ruta', 'Punto crónico', 'Patrulla', 'Reclamo'].includes(tipo);
-    const grupo = esFutbol ? 'PARTIDO DE FUTBOL' : esEvento ? 'EVENTO' : sec ? 'OFICIO' : evento ? 'EVENTO' : especial ? tipo.toUpperCase() : 'RELEVAMIENTO';
+    // Disuasión en un chat que no es de eventos: grupo OFICIO, tipo de servicio DISUASIÓN.
+    const oficioDisuasion = tipo === 'Disuasión' && !esFutbol && !esEvento;
+    const grupo = esFutbol ? 'PARTIDO DE FUTBOL' : esEvento ? 'EVENTO' : (sec || oficioDisuasion) ? 'OFICIO' : evento ? 'EVENTO' : especial ? tipo.toUpperCase() : 'RELEVAMIENTO';
     const fila = {
       categoria: sec ? 'SECUESTRO' : 'CHECKPOINT',
       date: f.date, time: f.time, datetime: f.datetime, weekday: f.weekday,
       files: archivo ? [archivo] : [],
       caption: m.join('\n'),
       grupo,
-      tipoServicio: sec ? 'SECUESTRO' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
+      tipoServicio: sec ? 'SECUESTRO' : oficioDisuasion ? 'DISUASIÓN' : evento ? String(m[3]).toUpperCase() : especial ? 'RELEVAMIENTO' : 'SIN INCIDENCIAS',
       detalleServicio: sec ? m[m.length - 1].toUpperCase() : (esFutbol ? 'SIN INCIDENCIAS' : m[m.length - 1].toUpperCase()),
       codigo: acta,
       precinto: '', numeroOrdenSap: reclamo || '',
@@ -996,7 +1004,7 @@
   const VENTANA_TEXTO_FOTO_MS = 5 * 60 * 1000;
   const esMedio = (e) => /\(archivo adjunto\)\s*$/i.test(e.body) || /^<Multimedia omitido>/i.test(e.body) || /^IMG-/i.test(e.body);
   const esIncidenciaTexto = (e) => !e.pre && !e.system && !esMedio(e)
-    && /^(re[lv]e[lv]amiento|secuestr|decomis|hoja|punto|patrulla|derivad|disuasi|evento|reclamo)/i.test(clean(e.body));
+    && /^(re[lv]e[lv]amiento|secuestr|decomis|hoja|punto|patrulla|derivad|disu|evento|reclamo)/i.test(clean(e.body));
   function momento(e) {
     const f = fechaDeStamp(e.stamp);
     if (!f) return NaN;
